@@ -1,0 +1,104 @@
+managed  with additional save implementation in class zbp_i_pricat_006 unique;
+strict ( 2 );
+with draft;
+define behavior for ZI_PRICAT_006 alias Pricat
+persistent table zpricat006
+draft table zpricat006d
+lock master
+total etag LastChangedAt
+authorization master ( instance )
+etag master LocalLastChangedAt
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) PricatUUID;
+  field ( readonly ) PricatID;
+
+  association _Customer {  create ( features : instance, authorization : update ); with draft; }
+  association _Product {  create ( features : instance, authorization : update ); with draft; }
+
+  draft determine action Prepare;
+  draft action Resume with additional implementation;
+  draft action Edit with additional implementation;
+  draft action Activate with additional implementation optimized;
+  draft action Discard /*with additional implementation*/;
+
+  // Actions:
+  action release;
+  action add_pricat_customers;
+  action add_promotion_customers;
+  action add_all_series;
+
+  side effects
+  {
+    //determine action Prepare executed on $self affects $self;
+    action add_pricat_customers affects entity _Customer;
+    action add_promotion_customers affects entity _Customer;
+    action add_all_series affects entity _Product;
+  }
+
+}
+
+define behavior for ZI_CUSTOMER_006 alias Customer
+persistent table zcustomer006
+draft table zcustomer006d
+lock dependent by _Pricat
+authorization dependent by _Pricat
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) CustomerUUID;
+  field ( readonly ) PricatUUID;
+  field ( readonly ) Currency;
+  field ( readonly ) Country;
+  field ( readonly ) GLN;
+
+  association _Pricat { with draft; }
+
+  // Events:
+  determination on_customer_modify on modify { field CustomerID; }
+
+  side effects
+  {
+    field CustomerID affects field Currency, field Country, field GLN;
+  }
+
+}
+
+define behavior for ZI_PRODUCT_006 alias Product
+persistent table zproduct006
+draft table zproduct006d
+lock dependent by _Pricat
+authorization dependent by _Pricat
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) ProductUUID;
+  field ( readonly ) PricatUUID;
+  field ( readonly ) PricatGroupNumber;
+  field ( readonly ) PricatName;
+  field ( readonly ) SeriesName;
+  field ( readonly ) ArticleName;
+  field ( readonly ) BackSize;
+  field ( readonly ) CupSize;
+  field ( readonly ) Color;
+  field ( readonly ) ColorName;
+  field ( readonly ) GTIN;
+
+  association _Pricat  { with draft; }
+
+  // Events:
+  determination on_product_modify on modify { field ProductID; }
+
+  side effects
+  {
+    field ProductID affects field PricatGroupNumber, field PricatName, field SeriesName, field ArticleName, field BackSize, field CupSize, field Color, field ColorName, field GTIN;
+  }
+
+}

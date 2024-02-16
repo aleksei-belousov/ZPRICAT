@@ -1,0 +1,44 @@
+projection;
+strict ( 2 );
+use draft;
+use side effects;
+
+define behavior for ZC_PRICAT_006 alias Pricat
+{
+  use create;
+  use update;
+  use delete;
+
+  use association _Customer { create; with draft; }
+  use association _Product { create; with draft; }
+
+  use action Resume;
+  use action Edit;
+  use action Activate;
+  use action Discard;
+  use action Prepare;
+
+  use action release;
+  use action add_pricat_customers;
+  use action add_promotion_customers;
+  use action add_all_series;
+
+}
+
+define behavior for ZC_CUSTOMER_006 alias Customer
+{
+  use update;
+  use delete;
+
+  use association _Pricat { with draft; }
+
+}
+
+define behavior for ZC_PRODUCT_006 alias Product
+{
+  use update;
+  use delete;
+
+  use association _Pricat { with draft; }
+
+}

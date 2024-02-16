@@ -1,0 +1,64 @@
+@Metadata.layer: #CORE
+@UI: {
+    headerInfo: { typeName: 'Customer',
+                  typeNamePlural: 'Customers',
+                  title: { type: #STANDARD, label: 'Customer', value: 'CustomerID' } },
+    presentationVariant: [{ sortOrder: [{ by: 'CustomerID', direction: #ASC }] }] }
+@Search.searchable: true
+
+annotate entity ZC_CUSTOMER_006 with 
+{
+
+    @UI.facet: [
+
+        {
+            id:            'Customer',
+            purpose:       #STANDARD,
+            type:          #IDENTIFICATION_REFERENCE,
+            label:         'Customer',
+            position:      20
+        }
+    ]
+
+    @UI.hidden: true
+    CustomerUUID;
+
+    @UI: {  lineItem:       [ { position: 10, label: 'Customer ID', cssDefault.width: '100px' } ],
+            identification: [ { position: 10, label: 'Customer ID' } ] }
+    @Search.defaultSearchElement: true
+    //@UI.hidden: true
+    CustomerID;
+
+    @UI.hidden: true
+    PricatUUID;
+
+    @UI: {  lineItem:       [ { position: 20, label: 'Currency', cssDefault.width: '100px' } ],
+            identification: [ { position: 20, label: 'Currency' } ] }
+    @Search.defaultSearchElement: true
+    Currency; 
+
+    @UI: {  lineItem:       [ { position: 30, label: 'Country', cssDefault.width: '100px' } ],
+            identification: [ { position: 30, label: 'Country' } ] }
+    @Search.defaultSearchElement: true
+    Country;
+
+    @UI: {  lineItem:       [ { position: 40, label: 'GLN', cssDefault.width: '100px' } ],
+            identification: [ { position: 40, label: 'GLN' } ] }
+    @Search.defaultSearchElement: true
+    GLN;
+
+    @UI.hidden: true
+    CreatedBy;
+
+    @UI.hidden: true
+    CreatedAt;
+
+    @UI.hidden: true
+    LastChangedBy;
+
+    @UI.hidden: true
+    LastChangedAt;
+
+    @UI.hidden: true
+    LocalLastChangedAt;
+}

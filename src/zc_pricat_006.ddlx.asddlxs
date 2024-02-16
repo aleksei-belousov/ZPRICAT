@@ -1,0 +1,90 @@
+@Metadata.layer: #CORE
+@UI: {
+    headerInfo: { typeName: 'Price Catalog',
+                  typeNamePlural: 'Price Catalogs',
+                  title: { type: #STANDARD, label: 'Price Catalog', value: 'PricatID' } },
+    presentationVariant: [{ sortOrder: [{ by: 'PricatUUID', direction: #ASC }] }] }
+//@Search.searchable: true
+
+annotate entity ZC_PRICAT_006 with 
+{
+
+    @UI.facet: [
+        // Price Catalog (header) 
+        {
+            id:            'Pricat',
+            purpose:       #STANDARD,
+            type:          #IDENTIFICATION_REFERENCE,
+            label:         'Price Catalog',
+            position:      10
+        },
+        // Customers
+        {
+            hidden:       false,
+            label:        'Customer',
+            id:           'CustopmerUUID',
+            purpose:      #STANDARD,
+            type:         #LINEITEM_REFERENCE,
+            position:     20,
+            targetElement: '_Customer'
+         },
+        // Products
+        {
+            hidden:       false,
+            label:        'Product',
+            id:           'ProductUUID',
+            purpose:      #STANDARD,
+            type:         #LINEITEM_REFERENCE,
+            position:     30,
+            targetElement: '_Product'
+         }
+    ]
+
+    @UI.hidden: true
+    PricatUUID;
+
+    @UI: {  lineItem:       [ { position: 10, label: 'Price Catalog ID', cssDefault.width: '200px' } ],
+            identification: [ { position: 10, label: 'Price Catalog ID' }, 
+                              { type: #FOR_ACTION, dataAction: 'release', label: 'Release', position: 1 },
+                              { type: #FOR_ACTION, dataAction: 'add_pricat_customers',      label: 'Add Pricat Customers',      position: 2 },
+                              { type: #FOR_ACTION, dataAction: 'add_promotion_customers',   label: 'Add Promotion Customers',   position: 3 },
+                              { type: #FOR_ACTION, dataAction: 'add_all_series',            label: 'Add All Series',            position: 4 } ] }
+    //@UI.hidden: true
+    PricatID;
+
+    @UI: {  lineItem:       [ { position: 20, label: 'Sales Organization', cssDefault.width: '200px' } ],
+            identification: [ { position: 20, label: 'Sales Organization' } ] }
+    //@UI.hidden: true
+    SalesOrganization;
+
+    @UI: {  lineItem:       [ { position: 30, label: 'Distribution Channel', cssDefault.width: '200px' } ],
+            identification: [ { position: 30, label: 'Distribution Channel' } ] }
+    //@UI.hidden: true
+    DistributionChannel;
+
+    @UI: {  lineItem:       [ { position: 40, label: 'Division', cssDefault.width: '200px' } ],
+            identification: [ { position: 40, label: 'Division' } ] }
+    //@UI.hidden: true
+    Division;
+
+
+    @UI: {  lineItem:       [ { position: 50, label: 'Product Series', cssDefault.width: '200px' } ],
+            identification: [ { position: 50, label: 'Product Series' } ] }
+    //@UI.hidden: true
+    ProductSeries;
+
+    @UI.hidden: true
+    CreatedBy;
+
+    @UI.hidden: true
+    CreatedAt;
+
+    @UI.hidden: true
+    LastChangedBy;
+
+    @UI.hidden: true
+    LastChangedAt;
+
+    @UI.hidden: true
+    LocalLastChangedAt;
+}

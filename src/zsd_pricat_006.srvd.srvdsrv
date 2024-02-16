@@ -1,0 +1,6 @@
+@EndUserText.label: 'Price Catalog'
+define service ZSD_PRICAT_006 {
+  expose ZC_PRICAT_006;
+  expose ZC_CUSTOMER_006;
+  expose ZC_PRODUCT_006;
+}

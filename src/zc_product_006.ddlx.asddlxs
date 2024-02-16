@@ -1,0 +1,93 @@
+@Metadata.layer: #CORE
+@UI: {
+    headerInfo: { typeName: 'Product',
+                  typeNamePlural: 'Products',
+                  title: { type: #STANDARD, label: 'Product', value: 'ProductID' } },
+    presentationVariant: [{ sortOrder: [{ by: 'ProductID', direction: #ASC }] }] }
+@Search.searchable: true
+
+annotate entity ZC_PRODUCT_006 with 
+{
+
+    @UI.facet: [
+        {
+            id:            'Product',
+            purpose:       #STANDARD,
+            type:          #IDENTIFICATION_REFERENCE,
+            label:         'Product',
+            position:      10
+        }
+    ]
+
+    @UI.hidden: true
+    ProductUUID;
+
+    @UI: {  lineItem:       [ { position: 10, label: 'Product ID', cssDefault.width: '100px' } ],
+            identification: [ { position: 10, label: 'Product ID' } ] }
+    @Search.defaultSearchElement: true
+    //@UI.hidden: true
+    ProductID;
+
+    @UI.hidden: true
+    PricatUUID;
+
+    @UI: {  lineItem:       [ { position: 10, label: 'Pricat Group Number', cssDefault.width: '100px' } ],
+            identification: [ { position: 10, label: 'Pricat Group Number' } ] }
+    @UI.hidden: true
+    PricatGroupNumber;
+
+    @UI: {  lineItem:       [ { position: 20, label: 'Pricat Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 20, label: 'Pricat Name' } ] }
+    //@UI.hidden: true
+    PricatName;
+
+    @UI: {  lineItem:       [ { position: 30, label: 'Series Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 30, label: 'Series Name' } ] }
+    //@UI.hidden: true
+    SeriesName;
+
+    @UI: {  lineItem:       [ { position: 40, label: 'Article Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 40, label: 'Article Name' } ] }
+    //@UI.hidden: true
+    ArticleName; 
+
+    @UI: {  lineItem:       [ { position: 50, label: 'BackSize', cssDefault.width: '100px' } ],
+            identification: [ { position: 50, label: 'BackSize' } ] }
+    //@UI.hidden: true
+    BackSize;
+
+    @UI: {  lineItem:       [ { position: 60, label: 'CupSize', cssDefault.width: '100px' } ],
+            identification: [ { position: 60, label: 'CupSize' } ] }
+    //@UI.hidden: true
+    CupSize;
+
+    @UI: {  lineItem:       [ { position: 70, label: 'Color', cssDefault.width: '100px' } ],
+            identification: [ { position: 70, label: 'Color' } ] }
+    //@UI.hidden: true
+    Color;
+
+    @UI: {  lineItem:       [ { position: 80, label: 'Color Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 80, label: 'Color Name' } ] }
+    //@UI.hidden: true
+    ColorName;
+
+    @UI: {  lineItem:       [ { position: 90, label: 'GTIN', cssDefault.width: '100px' } ],
+            identification: [ { position: 90, label: 'GTIN' } ] }
+    //@UI.hidden: true
+    GTIN;
+
+    @UI.hidden: true
+    CreatedBy;
+
+    @UI.hidden: true
+    CreatedAt;
+
+    @UI.hidden: true
+    LastChangedBy;
+
+    @UI.hidden: true
+    LastChangedAt;
+
+    @UI.hidden: true
+    LocalLastChangedAt;
+}
