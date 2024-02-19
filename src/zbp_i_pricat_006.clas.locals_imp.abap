@@ -114,6 +114,20 @@ CLASS lhc_product IMPLEMENTATION.
 *       GTIN - GTIN - in A_Product as ProductStandardID
         <entity>-GTIN               = product-ProductStandardID.
 
+*       ProductGroup - MateialGroup (example: Z00001318)
+        <entity>-ProductGroup       = product-ProductGroup.
+
+*       ProductName - Product Desciption ('EN')
+        SELECT SINGLE * FROM I_ProductDescription WHERE ( Product = @<entity>-ProductID ) AND ( Language = 'E' ) INTO @DATA(productDescription).
+        IF ( sy-subrc = 0 ).
+            <entity>-ProductName = productDescription-ProductDescription.
+        ELSE.
+            <entity>-ProductName = ''.
+        ENDIF.
+
+*       ProductURL (link to Product)
+        <entity>-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && <entity>-ProductID && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
+
         APPEND VALUE #(
             %tky        = <entity>-%tky
             PricatGroupNumber   = <entity>-PricatGroupNumber
@@ -125,12 +139,17 @@ CLASS lhc_product IMPLEMENTATION.
             Color               = <entity>-Color
             ColorName           = <entity>-ColorName
             GTIN                = <entity>-GTIN
+            ProductGroup        = <entity>-ProductGroup
+            ProductName         = <entity>-ProductName
+            ProductURL          = <entity>-ProductURL
          )
          TO it_product_update.
 
         MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
             ENTITY Product
-            UPDATE FIELDS ( PricatGroupNumber PricatName SeriesName ArticleName BackSize CupSize Color ColorName GTIN )
+            UPDATE FIELDS (
+                PricatGroupNumber PricatName SeriesName ArticleName BackSize CupSize Color ColorName GTIN ProductGroup ProductName ProductURL
+            )
             WITH it_product_update
             FAILED DATA(failed2)
             MAPPED DATA(mapped2)
@@ -745,7 +764,11 @@ CLASS lhc_customer IMPLEMENTATION.
                 ( Division              = @pricat-Division              )     " '00'
             INTO
                 @DATA(customerSalesArea).
-        <entity>-Currency = customerSalesArea-Currency.
+        IF ( sy-subrc = 0 ).
+            <entity>-Currency = customerSalesArea-Currency.
+        ELSE.
+            <entity>-Currency = ''.
+        ENDIF.
 
 *       CountryCode - in A_BusinessPartnerAddress as Country
         SELECT SINGLE
@@ -756,7 +779,11 @@ CLASS lhc_customer IMPLEMENTATION.
                 ( BusinessPartner = @businessPartner-BusinessPartner )
             INTO
                 @DATA(businessPartnerAddress).
-        <entity>-Country = businessPartnerAddress-Country.
+        IF ( sy-subrc = 0 ).
+            <entity>-Country = businessPartnerAddress-Country.
+        ELSE.
+            <entity>-Country = ''.
+        ENDIF.
 
 *       GLN - in A_BusinessPartnerIdentification "BUP005"
         SELECT SINGLE
@@ -765,22 +792,30 @@ CLASS lhc_customer IMPLEMENTATION.
                 I_BuPaIdentification
             WHERE
                 ( BusinessPartner       = @businessPartner-BusinessPartner  ) AND " '0010000664'
-                ( BPIdentificationType  = 'BUP005'          )
+                ( BPIdentificationType  = 'BUP005'                          )
             INTO
                 @DATA(buPaIdentification).
-        <entity>-GLN = buPaIdentification-BPIdentificationNumber.
+        IF ( sy-subrc = 0 ).
+            <entity>-GLN = buPaIdentification-BPIdentificationNumber.
+        ELSE.
+            <entity>-GLN = ''.
+        ENDIF.
+
+*       CustomerURL (link to Customer)
+        <entity>-CustomerURL = '/ui#Customer-manage&/C_BusinessPartnerCustomer(BusinessPartner=''' && <entity>-CustomerID && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
 
         APPEND VALUE #(
             %tky        = <entity>-%tky
             Currency    = <entity>-Currency
             Country     = <entity>-Country
             GLN         = <entity>-GLN
+            CustomerURL = <entity>-CustomerURL
          )
          TO it_customer_update.
 
         MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
             ENTITY Customer
-            UPDATE FIELDS ( Currency Country GLN )
+            UPDATE FIELDS ( Currency Country GLN CustomerURL )
             WITH it_customer_update
             FAILED DATA(failed2)
             MAPPED DATA(mapped2)
@@ -887,11 +922,11 @@ CLASS lhc_pricat IMPLEMENTATION.
 
         IF ( <entity>-%is_draft = '00' ). " Saved
 
-*            IF ( <entity>-Released = abap_true ).
-**               Short format message
-*                APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'The Shipment Binding is already released.' ) ) TO reported-shipment.
-*                RETURN.
-*            ENDIF.
+            IF ( <entity>-Released = abap_true ).
+*               Short format message
+                APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'The Price Catalog is already released.' ) ) TO reported-pricat.
+                RETURN.
+            ENDIF.
 
 *           Customers
             READ ENTITIES OF zi_pricat_006  IN LOCAL MODE
@@ -910,7 +945,6 @@ CLASS lhc_pricat IMPLEMENTATION.
             ENDIF.
 
             SORT lt_customer STABLE BY CustomerID.
-
 
 *           Products
             READ ENTITIES OF zi_pricat_006 IN LOCAL MODE
@@ -934,7 +968,11 @@ CLASS lhc_pricat IMPLEMENTATION.
 
 *           Make body as an XML
             request_body = request_body && '<Pricat>' && cl_abap_char_utilities=>cr_lf.
+
             request_body = request_body && '<ID>' && <entity>-PricatID && '</ID>' && cl_abap_char_utilities=>cr_lf.
+            request_body = request_body && '<SalesOrganization>' && <entity>-SalesOrganization && '</SalesOrganization>' && cl_abap_char_utilities=>cr_lf.
+            request_body = request_body && '<DistributionChannel>' && <entity>-DistributionChannel && '</DistributionChannel>' && cl_abap_char_utilities=>cr_lf.
+            request_body = request_body && '<Division>' && <entity>-Division && '</Division>' && cl_abap_char_utilities=>cr_lf.
 
             DATA customerID        TYPE string.
             LOOP AT lt_customer INTO DATA(customer).
@@ -960,7 +998,8 @@ CLASS lhc_pricat IMPLEMENTATION.
                 request_body = request_body && '<Color>' && product-Color && '</Color>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ColorName>' && product-ColorName && '</ColorName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<GTIN>' && product-GTIN && '</GTIN>' && cl_abap_char_utilities=>cr_lf.
-
+                request_body = request_body && '<MaterialGroup>' && product-ProductGroup && '</MaterialGroup>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<ProductDescription>' && product-ProductName && '</ProductDescription>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '</Product>' && cl_abap_char_utilities=>cr_lf.
             ENDLOOP.
 
@@ -1052,16 +1091,16 @@ CLASS lhc_pricat IMPLEMENTATION.
 
             ENDTRY.
 
-*            MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
-*                ENTITY Pricat
-*                UPDATE FIELDS ( Released )
-*                WITH VALUE #( (
-*                    %tky        = <entity>-%tky
-*                    Released    = abap_true
-*                ) )
-*                FAILED DATA(failed3)
-*                MAPPED DATA(mapped3)
-*                REPORTED DATA(reported3).
+            MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
+                ENTITY Pricat
+                UPDATE FIELDS ( Released )
+                WITH VALUE #( (
+                    %tky        = <entity>-%tky
+                    Released    = abap_true
+                ) )
+                FAILED DATA(failed3)
+                MAPPED DATA(mapped3)
+                REPORTED DATA(reported3).
 
         ENDIF.
 

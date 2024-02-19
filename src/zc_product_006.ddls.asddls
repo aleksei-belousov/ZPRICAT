@@ -9,12 +9,10 @@ define view entity ZC_PRODUCT_006 as projection on ZI_PRODUCT_006
     @Consumption.valueHelpDefinition: [ { entity: { name: 'I_ProductTP_2', element: 'Product' } } ] 
     @EndUserText.label: 'Product'
     ProductID,
+
     PricatUUID,
-
     PricatGroupNumber,
-
     PricatName,
-
     SeriesName,
     ArticleName, 
     BackSize,
@@ -22,11 +20,16 @@ define view entity ZC_PRODUCT_006 as projection on ZI_PRODUCT_006
     Color,
     ColorName,
     GTIN,
+    ProductGroup,
+    ProductName,
+    ProductURL,
+
     CreatedBy,
     CreatedAt,
     LastChangedBy,
     LastChangedAt,
     LocalLastChangedAt,
+
     /* Associations */
     _Pricat : redirected to parent ZC_PRICAT_006
 }

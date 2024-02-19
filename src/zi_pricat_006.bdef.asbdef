@@ -34,6 +34,7 @@ etag master LocalLastChangedAt
   side effects
   {
     //determine action Prepare executed on $self affects $self;
+    action release affects $self;
     action add_pricat_customers affects entity _Customer;
     action add_promotion_customers affects entity _Customer;
     action add_all_series affects entity _Product;
@@ -90,6 +91,8 @@ etag master LocalLastChangedAt
   field ( readonly ) Color;
   field ( readonly ) ColorName;
   field ( readonly ) GTIN;
+  field ( readonly ) ProductGroup;
+  field ( readonly ) ProductName;
 
   association _Pricat  { with draft; }
 
@@ -98,7 +101,7 @@ etag master LocalLastChangedAt
 
   side effects
   {
-    field ProductID affects field PricatGroupNumber, field PricatName, field SeriesName, field ArticleName, field BackSize, field CupSize, field Color, field ColorName, field GTIN;
+    field ProductID affects field PricatGroupNumber, field PricatName, field SeriesName, field ArticleName, field BackSize, field CupSize, field Color, field ColorName, field GTIN, field ProductGroup, field ProductName;
   }
 
 }

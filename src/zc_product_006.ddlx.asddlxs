@@ -22,8 +22,8 @@ annotate entity ZC_PRODUCT_006 with
     @UI.hidden: true
     ProductUUID;
 
-    @UI: {  lineItem:       [ { position: 10, label: 'Product ID', cssDefault.width: '100px' } ],
-            identification: [ { position: 10, label: 'Product ID' } ] }
+    @UI: {  lineItem:       [ { position: 10, label: 'Product ID', cssDefault.width: '100px', type: #WITH_URL, url: 'ProductURL' } ],
+            identification: [ { position: 10, label: 'Product ID', type: #WITH_URL, url: 'ProductURL' } ] }
     @Search.defaultSearchElement: true
     //@UI.hidden: true
     ProductID;
@@ -75,6 +75,19 @@ annotate entity ZC_PRODUCT_006 with
             identification: [ { position: 90, label: 'GTIN' } ] }
     //@UI.hidden: true
     GTIN;
+
+    @UI: {  lineItem:       [ { position: 100, label: 'Material Group', cssDefault.width: '100px' } ],
+            identification: [ { position: 100, label: 'Material Group' } ] }
+    //@UI.hidden: true
+    ProductGroup;
+
+    @UI: {  lineItem:       [ { position: 110, label: 'Product Description', cssDefault.width: '100px' } ],
+            identification: [ { position: 110, label: 'Product Description' } ] }
+    //@UI.hidden: true
+    ProductName;
+
+    @UI.hidden: true
+    ProductURL;
 
     @UI.hidden: true
     CreatedBy;

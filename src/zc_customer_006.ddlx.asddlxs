@@ -23,8 +23,8 @@ annotate entity ZC_CUSTOMER_006 with
     @UI.hidden: true
     CustomerUUID;
 
-    @UI: {  lineItem:       [ { position: 10, label: 'Customer ID', cssDefault.width: '100px' } ],
-            identification: [ { position: 10, label: 'Customer ID' } ] }
+    @UI: {  lineItem:       [ { position: 10, label: 'Customer ID', cssDefault.width: '100px', type: #WITH_URL, url: 'CustomerURL' } ],
+            identification: [ { position: 10, label: 'Customer ID', type: #WITH_URL, url: 'CustomerURL' } ] }
     @Search.defaultSearchElement: true
     //@UI.hidden: true
     CustomerID;
@@ -46,6 +46,9 @@ annotate entity ZC_CUSTOMER_006 with
             identification: [ { position: 40, label: 'GLN' } ] }
     @Search.defaultSearchElement: true
     GLN;
+
+    @UI.hidden: true
+    CustomerURL;
 
     @UI.hidden: true
     CreatedBy;

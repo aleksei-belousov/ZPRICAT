@@ -8,16 +8,21 @@ association [0..1] to I_DistributionChannel as _DistributionChannel on $projecti
 association [0..1] to I_Division as _Division on $projection.Division = _Division.Division
 {
     key pricatuuid as PricatUUID,
+    
     pricatid as PricatID,
     salesorganization as SalesOrganization,
     distributionchannel as DistributionChannel,
     division as Division,
     productseries as ProductSeries,
+    released as Released,
+    
     createdby as CreatedBy,
     createdat as CreatedAt,
     lastchangedby as LastChangedBy,
     lastchangedat as LastChangedAt,
     locallastchangedat as LocalLastChangedAt,
+
+    /* Associations */
     _Product,
     _Customer,
     _SalesOrganization,

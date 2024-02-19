@@ -73,6 +73,11 @@ annotate entity ZC_PRICAT_006 with
     //@UI.hidden: true
     ProductSeries;
 
+    @UI: {  lineItem:       [ { position: 60, label: 'Released', cssDefault.width: '100px' } ],
+            identification: [ { position: 60, label: 'Released' } ] }
+    //@UI.hidden: true
+    Released;
+
     @UI.hidden: true
     CreatedBy;
 

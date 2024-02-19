@@ -5,6 +5,7 @@
 define root view entity ZC_PRICAT_006 provider contract transactional_query as projection on ZI_PRICAT_006
 {
     key PricatUUID,
+    
     PricatID,
 
     @Consumption.valueHelpDefinition: [ { entity: { name: 'I_SalesOrganization', element: 'SalesOrganization' }, useForValidation: true } ]
@@ -23,6 +24,7 @@ define root view entity ZC_PRICAT_006 provider contract transactional_query as p
     Division,
 
     ProductSeries,
+    Released,
 
     CreatedBy,
     CreatedAt,

@@ -4,6 +4,7 @@ define view entity ZI_PRODUCT_006 as select from zproduct006 as Product
 association to parent ZI_PRICAT_006 as _Pricat on $projection.PricatUUID = _Pricat.PricatUUID
 {
     key productuuid as ProductUUID,
+    
     productid as ProductID,
     pricatuuid as PricatUUID,
     pricatgroupnumber as PricatGroupNumber,
@@ -15,10 +16,16 @@ association to parent ZI_PRICAT_006 as _Pricat on $projection.PricatUUID = _Pric
     color as Color,
     colorname as ColorName,
     gtin as GTIN,
+    productgroup as ProductGroup,
+    productname as ProductName,
+    producturl as ProductURL,
+
     createdby as CreatedBy,
     createdat as CreatedAt,
     lastchangedby as LastChangedBy,
     lastchangedat as LastChangedAt,
     locallastchangedat as LocalLastChangedAt,
+    
+    /* Associations */
     _Pricat
 }
