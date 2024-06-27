@@ -13,7 +13,9 @@ define view entity ZC_PRODUCT_006 as projection on ZI_PRODUCT_006
     PricatUUID,
     PricatGroupNumber,
     PricatName,
+    Series,
     SeriesName,
+    Article, 
     ArticleName, 
     BackSize,
     CupSize,
@@ -22,6 +24,14 @@ define view entity ZC_PRODUCT_006 as projection on ZI_PRODUCT_006
     GTIN,
     ProductGroup,
     ProductName,
+
+    SalesStatus,
+    SalesStatusName,
+    ProductType,
+    ProductTypeName,
+    ZCollection,
+    ZCollectionName,
+
     ProductURL,
 
     CreatedBy,

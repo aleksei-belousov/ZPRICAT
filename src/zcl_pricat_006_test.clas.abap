@@ -1,6 +1,6 @@
 CLASS zcl_pricat_006_test DEFINITION PUBLIC FINAL CREATE PUBLIC.
   PUBLIC SECTION.
-    INTERFACES if_oo_adt_classrun .
+    INTERFACES if_oo_adt_classrun.
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -82,6 +82,15 @@ CLASS ZCL_PRICAT_006_TEST IMPLEMENTATION.
                 system_url(8) " my404898
                 '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
             INTO DATA(i_url).
+
+        IF ( system_url(8) = 'my404907' ). " test
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+        ENDIF.
+        IF ( system_url(8) = 'my410080' ). " prod
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+        ENDIF.
 
         DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
 
@@ -291,6 +300,15 @@ CLASS ZCL_PRICAT_006_TEST IMPLEMENTATION.
                 '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
             INTO DATA(i_url).
 
+        IF ( system_url(8) = 'my404907' ). " test
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+        ENDIF.
+        IF ( system_url(8) = 'my410080' ). " prod
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+        ENDIF.
+
         DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
 
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
@@ -458,6 +476,15 @@ CLASS ZCL_PRICAT_006_TEST IMPLEMENTATION.
         DATA i_username TYPE string VALUE 'INBOUND_USER'.
         DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
 
+        IF ( system_url(8) = 'my404907' ). " test
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+        ENDIF.
+        IF ( system_url(8) = 'my410080' ). " prod
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+        ENDIF.
+
         DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url ).
 
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
@@ -566,6 +593,15 @@ CLASS ZCL_PRICAT_006_TEST IMPLEMENTATION.
 
         DATA i_username TYPE string VALUE 'INBOUND_USER'.
         DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+
+        IF ( system_url(8) = 'my404907' ). " test
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+        ENDIF.
+        IF ( system_url(8) = 'my410080' ). " prod
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+        ENDIF.
 
         DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
 
@@ -690,6 +726,15 @@ CLASS ZCL_PRICAT_006_TEST IMPLEMENTATION.
 
         DATA i_username TYPE string VALUE 'INBOUND_USER'.
         DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+
+        IF ( system_url(8) = 'my404907' ). " test
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+        ENDIF.
+        IF ( system_url(8) = 'my410080' ). " prod
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+        ENDIF.
 
         DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url ).
 

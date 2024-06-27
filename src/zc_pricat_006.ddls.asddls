@@ -22,9 +22,19 @@ define root view entity ZC_PRICAT_006 provider contract transactional_query as p
     @ObjectModel.foreignKey.association: '_Division'
     @EndUserText.label: 'Organization Division'
     Division,
-
-    ProductSeries,
+    
+    PricingDate,
+    @EndUserText.label: 'Released'
     Released,
+    
+    /* Selection criteria */
+    ProductSeries,
+    @EndUserText.label: 'Cross-Dist. Chain Status'
+    SalesStatus,
+    ProductTypes,
+    Colors,
+    Collections,
+    RowLimit,
 
     CreatedBy,
     CreatedAt,

@@ -21,12 +21,15 @@ CLASS lhc_product DEFINITION INHERITING FROM cl_abap_behavior_handler.
                   VALUE(o_pricat_code)          TYPE string
                   VALUE(o_series_code)          TYPE string.
 
-
 ENDCLASS. " lhc_product DEFINITION
 
 CLASS lhc_product IMPLEMENTATION.
 
   METHOD on_product_modify.
+
+*    IF ( zbp_i_pricat_006=>on_product_modify_disable = abap_true ).
+*        RETURN.
+*    ENDIF.
 
     DATA it_product_update TYPE TABLE FOR UPDATE zi_pricat_006\\Product. " Product (item)
 
@@ -59,25 +62,40 @@ CLASS lhc_product IMPLEMENTATION.
         DATA(productID) = |{ <entity>-ProductID ALPHA = IN }|.
 
 *       Product
-*Product(s):
-        SELECT SINGLE * FROM I_Product WHERE ( Product = @<entity>-ProductID ) INTO @DATA(product). " '0000301-030-C-080'
 
-        get_custom_fields_internal(
-          EXPORTING
-             i_article_code        = CONV string( product-YY1_SeriesArticleGroup_PRD ) " '123'
-             i_color_code          = CONV string( product-YY1_Color_PRD )              " '030'
-             i_pricat_code         = CONV string( product-YY1_PRICATGroup_PRD )        " '21'
-             i_series_code         = CONV string( product-YY1_SeriesName_PRD )         " '126'
-          IMPORTING
-             o_article_description = DATA(article_description)
-             o_color_description   = DATA(color_description)
-             o_pricat_description  = DATA(pricat_description)
-             o_series_description  = DATA(series_description)
-             o_article_code        = DATA(article_code)
-             o_color_code          = DATA(color_code)
-             o_pricat_code         = DATA(pricat_code)
-             o_series_code         = DATA(series_code)
-        ).
+*       Product(s):
+        DATA product TYPE I_Product.
+        CLEAR product.
+        IF ( <entity>-ProductID IS NOT INITIAL ).
+            SELECT SINGLE * FROM I_Product WHERE ( Product = @<entity>-ProductID ) INTO @product. " '0000301-030-C-080'
+        ENDIF.
+
+        IF ( product-Product IS NOT INITIAL ).
+
+            DATA(i_article_code)    = CONV string( product-YY1_SeriesArticleGroup_PRD ).    " '123'
+            DATA(i_color_code)      = CONV string( product-YY1_Color_PRD ).                 " '030'
+            DATA(i_pricat_code)     = CONV string( product-YY1_PRICATGroup_PRD ).           " '21'
+            DATA(i_series_code)     = CONV string( product-YY1_SeriesName_PRD ).            " '126'
+
+*            get_custom_fields_internal(
+            zbp_i_pricat_006=>get_custom_fields_opt_internal(
+              EXPORTING
+                 i_article_code        = i_article_code
+                 i_color_code          = i_color_code
+                 i_pricat_code         = i_pricat_code
+                 i_series_code         = i_series_code
+              IMPORTING
+                 o_article_description = DATA(article_description)
+                 o_color_description   = DATA(color_description)
+                 o_pricat_description  = DATA(pricat_description)
+                 o_series_description  = DATA(series_description)
+                 o_article_code        = DATA(article_code)
+                 o_color_code          = DATA(color_code)
+                 o_pricat_code         = DATA(pricat_code)
+                 o_series_code         = DATA(series_code)
+            ).
+
+        ENDIF.
 
 *       Sales Price - AAA: Sales Price - ???
         DATA(salesPrice)    = 0.
@@ -85,14 +103,20 @@ CLASS lhc_product IMPLEMENTATION.
 *       Retail Price - AAE: Retail Price - ??? (maybe A_ProductValuation/to_ValuationCosting as StandardPrice) manage priceS - sales ZRRP + ZRR2 = 9 (1010)
         DATA(retailPrice)   = 0.
 
-*       Pricat Group Number - PRICAT Group Number - ??? YY1_PRICATGroupNo_PRD (fixed to YY1_PRICATGroup_PRD)
-        <entity>-PricatGroupNumber  = product-YY1_PRICATGroup_PRD.
+*       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
+        <entity>-Article            = i_article_code.
 
 *       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
         <entity>-ArticleName        = article_description.
 
+*       Pricat Group Number - PRICAT Group Number - ??? YY1_PRICATGroupNo_PRD (fixed to YY1_PRICATGroup_PRD)
+        <entity>-PricatGroupNumber  = product-YY1_PRICATGroup_PRD.
+
 *       Pricat Name - PRICAT Name - YY1_PRICATGroupNo_PRDT (fixed to YY1_PRICATGroup_PRDT)
         <entity>-PricatName         = pricat_description.
+
+*       Series - Series - YY1_SeriesName_PRDT
+        <entity>-Series             = i_series_code.
 
 *       Series Name - Series Name - YY1_SeriesName_PRDT
         <entity>-SeriesName         = series_description.
@@ -125,22 +149,40 @@ CLASS lhc_product IMPLEMENTATION.
             <entity>-ProductName = ''.
         ENDIF.
 
+*       SalesStatus (Cross-Distribution Chain Product Status)
+        <entity>-SalesStatus    = product-SalesStatus.
+
+*       ProductType
+        <entity>-ProductType    = product-ProductType.
+
+*       ZCollection
+        <entity>-ZCollection    = product-YY1_Collection_PRD.
+
 *       ProductURL (link to Product)
-        <entity>-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && <entity>-ProductID && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
+        IF ( <entity>-ProductID IS NOT INITIAL ).
+            <entity>-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && <entity>-ProductID && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
+        ELSE.
+            <entity>-ProductURL = ''.
+        ENDIF.
 
         APPEND VALUE #(
             %tky        = <entity>-%tky
             PricatGroupNumber   = <entity>-PricatGroupNumber
             PricatName          = <entity>-PricatName
+            Series              = <entity>-Series
             SeriesName          = <entity>-SeriesName
+            Article             = <entity>-Article
             ArticleName         = <entity>-ArticleName
-            BackSize            = <entity>-BackSize
-            CupSize             = <entity>-CupSize
             Color               = <entity>-Color
             ColorName           = <entity>-ColorName
+            BackSize            = <entity>-BackSize
+            CupSize             = <entity>-CupSize
             GTIN                = <entity>-GTIN
             ProductGroup        = <entity>-ProductGroup
             ProductName         = <entity>-ProductName
+            SalesStatus         = <entity>-SalesStatus
+            ProductType         = <entity>-ProductType
+            ZCollection         = <entity>-ZCollection
             ProductURL          = <entity>-ProductURL
          )
          TO it_product_update.
@@ -148,7 +190,7 @@ CLASS lhc_product IMPLEMENTATION.
         MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
             ENTITY Product
             UPDATE FIELDS (
-                PricatGroupNumber PricatName SeriesName ArticleName BackSize CupSize Color ColorName GTIN ProductGroup ProductName ProductURL
+                PricatGroupNumber PricatName Series SeriesName Article ArticleName Color ColorName BackSize CupSize GTIN ProductGroup ProductName SalesStatus ProductType ZCollection ProductURL
             )
             WITH it_product_update
             FAILED DATA(failed2)
@@ -158,335 +200,6 @@ CLASS lhc_product IMPLEMENTATION.
     ENDLOOP.
 
   ENDMETHOD. " on_product_modify
-
-* https://my404907.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_PRICATGroupNoSet('105')
-* https://my404907.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_PRICATGroupSet('21')
-* https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_PRICATGroupSet('21')
-*  METHOD get_pricat_name_internal.
-*
-*    TRY.
-*
-*        DATA(system_url) = cl_abap_context_info=>get_system_url( ).
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-**                '-api.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_PRICATGroupNoSet('
-**                '-api.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_PRICATGroupSet('
-*                '.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_PRICATGroupSet('
-*                ''''
-*                i_pricat_group_number
-*                ''''
-*                ')'
-*            INTO
-*                DATA(i_url).
-*
-*        DATA i_username TYPE string VALUE 'INBOUND_USER'.
-*        DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-**        IF ( system_url(8) = 'my404907' ). " test
-**            i_username = 'INBOUND_FIEGE_USER'.
-**            i_password = 'JpLftkzhkoktLzvvoxD6oWeXsM#ZXccgfsBBzRpg'.
-**        ENDIF.
-*
-**       for testing
-*        i_username = 'abelousov'.
-*        i_password = 'SnapNitra2024'.
-*
-*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*            i_password = i_password
-*        ).
-*
-*        DATA(lo_http_response) = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        DATA(text) = lo_http_response->get_text( ).
-*
-*        DATA(status) = lo_http_response->get_status( ).
-*
-*        REPLACE '<d:Description>'  WITH '******' INTO text.
-*        REPLACE '</d:Description>' WITH '******' INTO text.
-*        SPLIT text AT '******' INTO DATA(s1) DATA(s2) DATA(s3).
-*
-*        o_pricat_name = s2.
-*
-*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_abap_context_info_error.
-*
-*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_remote.
-*
-*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_gateway.
-*
-*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_http_client_error.
-*
-*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-*        "handle exception
-**      RAISE SHORTDUMP lx_http_dest_provider_error.
-*
-*    ENDTRY.
-*
-*  ENDMETHOD. " get_pricat_name_interna
-*
-** https://my404907.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_SeriesNameSet('105')
-*  METHOD get_series_name_internal.
-*
-*    TRY.
-*
-*        DATA(system_url) = cl_abap_context_info=>get_system_url( ).
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_SeriesNameSet('
-*                ''''
-*                i_series
-*                ''''
-*                ')'
-*            INTO
-*                DATA(i_url).
-*
-*        DATA i_username TYPE string VALUE 'INBOUND_USER'.
-*        DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-**        IF ( system_url(8) = 'my404907' ). " test
-**            i_username = 'INBOUND_FIEGE_USER'.
-**            i_password = 'JpLftkzhkoktLzvvoxD6oWeXsM#ZXccgfsBBzRpg'.
-**        ENDIF.
-*
-*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*            i_password = i_password
-*        ).
-*
-*        DATA(lo_http_response) = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        DATA(text) = lo_http_response->get_text( ).
-*
-*        DATA(status) = lo_http_response->get_status( ).
-*
-*        REPLACE '<d:Description>'  WITH '******' INTO text.
-*        REPLACE '</d:Description>' WITH '******' INTO text.
-*        SPLIT text AT '******' INTO DATA(s1) DATA(s2) DATA(s3).
-*
-*        o_series_name = s2.
-*
-*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_abap_context_info_error.
-*
-*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_remote.
-*
-*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_gateway.
-*
-*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_http_client_error.
-*
-*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-*        "handle exception
-**      RAISE SHORTDUMP lx_http_dest_provider_error.
-*
-*    ENDTRY.
-*
-*  ENDMETHOD. " get_series_name_internal
-*
-** https://my404907.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_SeriesArticleGroupSet('105')
-*  METHOD get_article_name_internal.
-*
-*    TRY.
-*
-*        DATA(system_url) = cl_abap_context_info=>get_system_url( ).
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_SeriesArticleGroupSet('
-*                ''''
-*                i_article
-*                ''''
-*                ')'
-*            INTO
-*                DATA(i_url).
-*
-*        DATA i_username TYPE string VALUE 'INBOUND_USER'.
-*        DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-**        IF ( system_url(8) = 'my404907' ). " test
-**            i_username = 'INBOUND_FIEGE_USER'.
-**            i_password = 'JpLftkzhkoktLzvvoxD6oWeXsM#ZXccgfsBBzRpg'.
-**        ENDIF.
-*
-*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*            i_password = i_password
-*        ).
-*
-*        DATA(lo_http_response) = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        DATA(text) = lo_http_response->get_text( ).
-*
-*        DATA(status) = lo_http_response->get_status( ).
-*
-*        REPLACE '<d:Description>'  WITH '******' INTO text.
-*        REPLACE '</d:Description>' WITH '******' INTO text.
-*        SPLIT text AT '******' INTO DATA(s1) DATA(s2) DATA(s3).
-*
-*        o_article_name = s2.
-*
-*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_abap_context_info_error.
-*
-*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_remote.
-*
-*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_gateway.
-*
-*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_http_client_error.
-*
-*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-*        "handle exception
-**      RAISE SHORTDUMP lx_http_dest_provider_error.
-*
-*    ENDTRY.
-*
-*  ENDMETHOD. " get_article_name_internal
-*
-** https://my404907.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_ColorSet('003')
-*  METHOD get_color_name_internal.
-
-*    Does not work
-*    SELECT SINGLE
-*            Description
-*        FROM
-*            YY1_COLOR_W WITH PRIVILEGED ACCESS
-*        WHERE
-*            ( Code = @i_color ) AND
-*            ( Language = 'E' )
-*        INTO
-*            @DATA(description).
-
-*    SELECT SINGLE * FROM YY1_COLOR_V WITH PRIVILEGED ACCESS WHERE ( Code = '003' ) INTO @DATA(color) .
-*    SELECT SINGLE description FROM yy1_color_w WITH PRIVILEGED ACCESS WHERE ( code = '003' ) AND ( language = 'E' ) INTO @customfieldsaccess-description.
-
-*    i_color = '003'.
-
-*    TRY.
-*
-*        DATA(system_url) = cl_abap_context_info=>get_system_url( ).
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_ColorSet('
-**                '.s4hana.cloud.sap/sap/opu/odata/sap/MD_C_PRODUCT_MAINTAIN_SRV/YY1_ColorSet('
-*                ''''
-*                i_color
-*                ''''
-*                ')'
-*            INTO
-*                DATA(i_url).
-*
-*        DATA i_username TYPE string VALUE 'INBOUND_USER'.
-*        DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-**        IF ( system_url(8) = 'my404907' ). " test
-**            i_username = 'INBOUND_FIEGE_USER'.
-**            i_password = 'JpLftkzhkoktLzvvoxD6oWeXsM#ZXccgfsBBzRpg'.
-**        ENDIF.
-*
-**       for testing
-**        i_username = 'abelousov'.
-**        i_password = 'SnapNitra2024'.
-*
-*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*           i_password = i_password
-*        ).
-*
-**        lo_http_client->accept_cookies( i_allow = abap_true ).
-**        CATCH cx_web_http_client_error.
-*
-**        DATA(r_value) = lo_http_client->get_http_request( )->set_cookie(
-**          EXPORTING
-**            i_name    = 'SAP_SESSIONID_XL0_080'
-**            i_path    = '/'
-**            i_value   = 'qFs6mHR9gyVMBcVKJAZDRkOJxp7HRRHukOGRv2s4HA8%3d'
-**            i_domain  = 'my404930.s4hana.cloud.sap'
-***            i_expires = '2022-02-28'
-**            i_secure  = 1
-***          RECEIVING
-***            r_value   =
-**        ).
-***        CATCH cx_web_message_error.kies
-*
-*        DATA(lo_http_response) = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        DATA(text) = lo_http_response->get_text( ).
-*
-*        DATA(status) = lo_http_response->get_status( ).
-*
-*        REPLACE '<d:Description>'  WITH '******' INTO text.
-*        REPLACE '</d:Description>' WITH '******' INTO text.
-*        SPLIT text AT '******' INTO DATA(s1) DATA(s2) DATA(s3).
-*
-*        o_color_name = s2.
-*
-*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_abap_context_info_error.
-*
-*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_remote.
-*
-*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_gateway.
-*
-*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_http_client_error.
-*
-*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-*        "handle exception
-**      RAISE SHORTDUMP lx_http_dest_provider_error.
-*
-*    ENDTRY.
-*
-*  ENDMETHOD. " get_color_name_internal
 
 *   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
   METHOD get_custom_fields_internal.
@@ -518,6 +231,15 @@ CLASS lhc_product IMPLEMENTATION.
                 system_url(8) " my404898
                 '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
             INTO DATA(i_url).
+
+        IF ( system_url(8) = 'my404907' ). " test
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+        ENDIF.
+        IF ( system_url(8) = 'my410080' ). " prod
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+        ENDIF.
 
         DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
 
@@ -853,6 +575,25 @@ CLASS lhc_pricat DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS add_all_series FOR MODIFY IMPORTING keys FOR ACTION Pricat~add_all_series.
 
+    METHODS add_products_based_on_filters FOR MODIFY IMPORTING keys FOR ACTION Pricat~add_products_based_on_filters.
+
+******** Internal Methods *********
+
+*   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+    METHODS get_custom_fields_internal
+        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
+                  VALUE(i_color_code)           TYPE string OPTIONAL
+                  VALUE(i_pricat_code)          TYPE string OPTIONAL
+                  VALUE(i_series_code)          TYPE string OPTIONAL
+        EXPORTING VALUE(o_article_description)  TYPE string
+                  VALUE(o_color_description)    TYPE string
+                  VALUE(o_pricat_description)   TYPE string
+                  VALUE(o_series_description)   TYPE string
+                  VALUE(o_article_code)         TYPE string
+                  VALUE(o_color_code)           TYPE string
+                  VALUE(o_pricat_code)          TYPE string
+                  VALUE(o_series_code)          TYPE string.
+
 ENDCLASS. " lhc_pricat DEFINITION
 
 CLASS lhc_pricat IMPLEMENTATION.
@@ -973,6 +714,7 @@ CLASS lhc_pricat IMPLEMENTATION.
             request_body = request_body && '<SalesOrganization>' && <entity>-SalesOrganization && '</SalesOrganization>' && cl_abap_char_utilities=>cr_lf.
             request_body = request_body && '<DistributionChannel>' && <entity>-DistributionChannel && '</DistributionChannel>' && cl_abap_char_utilities=>cr_lf.
             request_body = request_body && '<Division>' && <entity>-Division && '</Division>' && cl_abap_char_utilities=>cr_lf.
+            request_body = request_body && '<PricingDate>' && <entity>-PricingDate && '</PricingDate>' && cl_abap_char_utilities=>cr_lf.
 
             DATA customerID        TYPE string.
             LOOP AT lt_customer INTO DATA(customer).
@@ -992,6 +734,7 @@ CLASS lhc_pricat IMPLEMENTATION.
                 CONDENSE productID NO-GAPS.
                 request_body = request_body && '<Product>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ProductID>' && productID && '</ProductID>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<PricatGroupNumber>' && product-PricatGroupNumber && '</PricatGroupNumber>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<PricatName>' && product-PricatName && '</PricatName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<SeriesName>' && product-SeriesName && '</SeriesName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ArticleName>' && product-ArticleName && '</ArticleName>' && cl_abap_char_utilities=>cr_lf.
@@ -1020,6 +763,16 @@ CLASS lhc_pricat IMPLEMENTATION.
                     i_url = 'https://felina-hu-scpi-test-eyjk96r2.it-cpi018-rt.cfapps.eu10-003.hana.ondemand.com/http/Pricat'.
                 ENDIF.
 
+*PRICAT na realease:
+*URL: https://felinahuscpi.it-cpi001-rt.cfapps.eu10.hana.ondemand.com/http/Pricat
+*username: sb-d6f68eaf-c42b-4ab0-931d-60753301674e!b102052|it-rt-felinahuscpi!b16077
+*passwrod: 462ff083-e299-4fb6-a44f-3b627fd8b406$XlkjK6-n64zyzYZkjk45eANimRNA-nMD8Pe3TKppq9w=
+                IF ( system_url(8) = 'my410080' ). " prod
+                    i_url       = 'https://felinahuscpi.it-cpi001-rt.cfapps.eu10.hana.ondemand.com/http/Pricat'.
+                    i_username  = 'sb-d6f68eaf-c42b-4ab0-931d-60753301674e!b102052|it-rt-felinahuscpi!b16077'.
+                    i_password  = '462ff083-e299-4fb6-a44f-3b627fd8b406$XlkjK6-n64zyzYZkjk45eANimRNA-nMD8Pe3TKppq9w='.
+                ENDIF.
+
                 DATA(http_destination) = cl_http_destination_provider=>create_by_url(
                     i_url = i_url
                 ).
@@ -1039,25 +792,25 @@ CLASS lhc_pricat IMPLEMENTATION.
 
                 DATA(lo_http_response) = lo_http_client->execute(
                     i_method   = if_web_http_client=>get
-*                    i_timeout  = 0
+                    i_timeout  = 1
                 ).
 
-                DATA(response_body) = lo_http_response->get_text( ).
-                DATA(status)        = lo_http_response->get_status( ).
-                DATA(header_fields) = lo_http_response->get_header_fields( ).
-                DATA(header_status) = lo_http_response->get_header_field( '~status_code' ).
+*                DATA(response_body) = lo_http_response->get_text( ).
+*                DATA(status)        = lo_http_response->get_status( ).
+*                DATA(header_fields) = lo_http_response->get_header_fields( ).
+*                DATA(header_status) = lo_http_response->get_header_field( '~status_code' ).
 
 *                out->write( cl_abap_char_utilities=>cr_lf && status-code && cl_abap_char_utilities=>cr_lf ).
 *                out->write( cl_abap_char_utilities=>cr_lf && response_body && cl_abap_char_utilities=>cr_lf ).
 
-                IF ( status-code = 200 ).
+*                IF ( status-code = 200 ).
                     APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-success text = 'Successfully Sent.'  ) ) TO reported-pricat.
-                ELSE.
-                    DATA(code) = CONV string( status-code ).
-                    CONCATENATE 'Error Status Code =' code '.' INTO DATA(text) SEPARATED BY space.
-                    APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = text  ) ) TO reported-pricat.
-                    RETURN.
-                ENDIF.
+*                ELSE.
+*                    DATA(code) = CONV string( status-code ).
+*                    CONCATENATE 'Error Status Code =' code '.' INTO DATA(text) SEPARATED BY space.
+*                    APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = text  ) ) TO reported-pricat.
+*                    RETURN.
+*                ENDIF.
 
             CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
               " Handle remote Exception
@@ -1074,8 +827,9 @@ CLASS lhc_pricat IMPLEMENTATION.
             CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
               " Handle Exception
 *              RAISE SHORTDUMP lx_web_http_client_error.
-                APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'Web HTTP Client Error.' ) ) TO reported-pricat.
-                RETURN.
+*               APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'Web HTTP Client Error.' ) ) TO reported-pricat.
+*               RETURN.
+                APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-success text = 'Process in CPI started!.'  ) ) TO reported-pricat.
 
             CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
                 "handle exception
@@ -1193,7 +947,10 @@ CLASS lhc_pricat IMPLEMENTATION.
 
         ##ASSOC_TO_N_OK[_CUSTOMERSALESAREA]
         SELECT
-                \_CustomerSalesArea-Customer AS Customer
+                \_CustomerSalesArea-Customer AS Customer,
+                \_CustomerSalesArea-SalesOrganization AS SalesOrganization,
+                \_CustomerSalesArea-DistributionChannel AS DistributionChannel,
+                \_CustomerSalesArea-Division AS Division
             FROM
                 I_Customer
             WHERE
@@ -1206,7 +963,18 @@ CLASS lhc_pricat IMPLEMENTATION.
             INTO TABLE
                 @DATA(it_customer).
 
-        IF ( sy-subrc <> 0 ).
+*       Additional filtering by Pricat Customer
+        SELECT * FROM I_CustomerToBusinessPartner WHERE ( \_BusinessPartner-YY1_PRICAT_bus = 'X' ) ORDER BY Customer INTO TABLE @DATA(it_customertobusinesspartner).
+        SORT it_customertobusinesspartner BY Customer.
+        LOOP AT it_customer ASSIGNING FIELD-SYMBOL(<fs_customer>).
+            READ TABLE it_customertobusinesspartner WITH KEY Customer = <fs_customer>-Customer BINARY SEARCH TRANSPORTING NO FIELDS.
+            IF ( sy-subrc <> 0 ).
+                CLEAR <fs_customer>-Customer.
+            ENDIF.
+        ENDLOOP.
+        DELETE it_customer WHERE ( Customer IS INITIAL ).
+
+        IF ( it_customer[] IS INITIAL ).
             APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'No Customer Found.' ) ) TO reported-pricat.
             RETURN.
         ENDIF.
@@ -1239,10 +1007,18 @@ CLASS lhc_pricat IMPLEMENTATION.
 
   ENDMETHOD. " add_promotion_customers
 
-  METHOD add_all_series.
+  METHOD add_all_series. " Add All Series
 
-    DATA it_product_create TYPE TABLE FOR CREATE zi_pricat_006\_Product. " Product (item)
-    DATA regexp TYPE string.
+  ENDMETHOD. " add_all_series
+
+  METHOD add_products_based_on_filters. " Add Product Based On Filters
+
+    DATA it_product_create  TYPE TABLE FOR CREATE zi_pricat_006\_Product. " Product (item)
+    DATA regexp             TYPE string.
+    DATA r_producttype      TYPE RANGE OF I_Product-ProductType.
+    DATA r_color            TYPE RANGE OF I_Product-YY1_Color_PRD.
+    DATA r_collection       TYPE RANGE OF I_Product-YY1_Collection_PRD.
+    DATA r_salesstatus      TYPE RANGE OF I_Product-SalesStatus.
 
     " Read transfered instances
     READ ENTITIES OF zi_pricat_006 IN LOCAL MODE
@@ -1258,30 +1034,130 @@ CLASS lhc_pricat IMPLEMENTATION.
         IF ( <entity>-%is_draft = '01' ). " Draft
         ENDIF.
 
-        IF ( <entity>-ProductSeries IS INITIAL ).
-            APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'No Product Found.' ) ) TO reported-pricat.
-            RETURN.
-        ENDIF.
+*        IF ( <entity>-ProductSeries IS INITIAL ).
+*           APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'No Product Found.' ) ) TO reported-pricat.
+*            RETURN.
+*        ENDIF.
 
+*       Filters:
+
+*       Product Series
+        CONDENSE <entity>-ProductSeries NO-GAPS.
         regexp = <entity>-ProductSeries && '%'.
 
-        SELECT * FROM I_ProductTP_2 WHERE ( Product LIKE @regexp ) INTO TABLE @DATA(it_product).
+*       Product Types
+        CONDENSE <entity>-ProductTypes NO-GAPS.
+        SPLIT <entity>-ProductTypes AT ',' INTO TABLE DATA(it_producttype).
+        LOOP AT it_producttype INTO DATA(wa_producttype).
+            APPEND VALUE #(
+                sign    = 'I'
+                option  = 'EQ'
+                low     = wa_producttype
+            )
+            TO r_producttype.
+        ENDLOOP.
+
+*       Colors
+        CONDENSE <entity>-Colors NO-GAPS.
+        SPLIT <entity>-Colors AT ',' INTO TABLE DATA(it_color).
+        LOOP AT it_color INTO DATA(wa_color).
+            APPEND VALUE #(
+                sign    = 'I'
+                option  = 'EQ'
+                low     = wa_color
+            )
+            TO r_color.
+        ENDLOOP.
+
+*       Collections
+        CONDENSE <entity>-Collections NO-GAPS.
+        SPLIT <entity>-Collections AT ',' INTO TABLE DATA(it_collection).
+        LOOP AT it_collection INTO DATA(wa_collection).
+            APPEND VALUE #(
+                sign    = 'I'
+                option  = 'EQ'
+                low     = wa_collection
+            )
+            TO r_collection.
+        ENDLOOP.
+
+*       Sales Status
+        CONDENSE <entity>-SalesStatus NO-GAPS.
+        SPLIT <entity>-SalesStatus AT ',' INTO TABLE DATA(it_salesstatus).
+        LOOP AT it_salesstatus INTO DATA(wa_salesstatus).
+            APPEND VALUE #(
+                sign    = 'I'
+                option  = 'EQ'
+                low     = wa_salesstatus
+            )
+            TO r_salesstatus.
+        ENDLOOP.
+
+*        SELECT * FROM I_ProductTP_2 WHERE ( Product LIKE @regexp ) INTO TABLE @DATA(it_product).
+        SELECT
+                *
+            FROM
+                I_Product
+            WHERE
+                ( Product               LIKE @regexp        ) AND
+                ( ProductType           IN @r_producttype   ) AND
+                ( YY1_Color_PRD         IN @r_color         ) AND
+                ( YY1_Collection_PRD    IN @r_collection    ) AND
+                ( SalesStatus           IN @r_salesstatus   )
+            ORDER BY
+                Product
+            INTO TABLE
+                @DATA(it_product).
 
         IF ( sy-subrc <> 0 ).
             APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'No Product Found.' ) ) TO reported-pricat.
             RETURN.
         ENDIF.
 
+*       Read Product (items)
+        READ ENTITIES OF zi_pricat_006 IN LOCAL MODE
+            ENTITY Pricat BY \_Product
+            ALL FIELDS WITH VALUE #( (
+                %tky = <entity>-%tky
+            ) )
+            RESULT DATA(lt_product)
+            FAILED DATA(failed1)
+            REPORTED DATA(reported1).
+
+*       Exclude Products presented in Items
+        SORT lt_product STABLE BY ProductID.
+        LOOP AT it_product ASSIGNING FIELD-SYMBOL(<product>).
+            READ TABLE lt_product WITH KEY ProductID = <product>-Product BINARY SEARCH TRANSPORTING NO FIELDS.
+            IF ( sy-subrc = 0 ).
+                CLEAR <product>-Product.
+            ENDIF.
+        ENDLOOP.
+        DELETE it_product WHERE ( Product iS INITIAL ).
+
+*       Add rest Products into Items
         LOOP AT it_product INTO DATA(wa_product).
-            DATA(cid) = sy-tabix.
+            DATA(tabix) = sy-tabix.
+            DATA(cid)   = sy-tabix.
             APPEND VALUE #(
                 %tky  = <entity>-%tky
                 %target = VALUE #( (
-                    %is_draft       = <entity>-%is_draft
-                    %cid            = cid
-                    ProductID      = wa_product-Product
+                    %is_draft   = <entity>-%is_draft
+                    %cid        = cid
+                    ProductID   = wa_product-Product
                 ) )
             ) TO it_product_create.
+
+*           Row Limit
+            IF ( <entity>-RowLimit IS NOT INITIAL ).
+                IF ( tabix >= <entity>-RowLimit ).
+                    DATA(added) = CONV string( tabix ).
+                    DATA(outof) = CONV string( LINES( it_product ) ).
+                    CONCATENATE 'Added' added 'Rows out of' outof INTO DATA(text) SEPARATED BY space.
+                    APPEND VALUE #( %key = <entity>-%key %msg = new_message_with_text( severity = if_abap_behv_message=>severity-warning text = text ) ) TO reported-pricat.
+                    EXIT.
+                ENDIF.
+            ENDIF.
+
         ENDLOOP.
 
 *       Create Product (item)
@@ -1290,13 +1166,234 @@ CLASS lhc_pricat IMPLEMENTATION.
             CREATE BY \_Product
             FIELDS ( ProductID )
             WITH it_product_create
-            MAPPED DATA(mapped1)
-            FAILED DATA(failed1)
-            REPORTED DATA(reported1).
+            MAPPED DATA(mapped2)
+            FAILED DATA(failed2)
+            REPORTED DATA(reported2).
 
     ENDLOOP.
 
-  ENDMETHOD. " add_all_series
+  ENDMETHOD. " add_products_based_on_filters
+
+* Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+  METHOD get_custom_fields_internal.
+
+    DATA system_url TYPE string.
+
+    DATA i_username TYPE string VALUE 'INBOUND_USER'.
+    DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+
+    DATA token      TYPE string.
+    DATA body       TYPE string.
+    DATA text       TYPE string.
+    DATA s1         TYPE string.
+    DATA s2         TYPE string.
+    DATA s3         TYPE string.
+
+    TRY.
+
+*  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS(guid'91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc')'.
+*  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'.
+
+        system_url = cl_abap_context_info=>get_system_url( ).
+
+
+*       Read list of objects and get UUID of the first one:
+
+        CONCATENATE
+                'https://'
+                system_url(8) " my404898
+                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
+            INTO DATA(i_url).
+
+        IF ( system_url(8) = 'my404907' ). " test
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+        ENDIF.
+        IF ( system_url(8) = 'my410080' ). " prod
+            i_username  = 'INBOUND_USER'.
+            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+        ENDIF.
+
+        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
+
+        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
+
+        lo_http_client->get_http_request( )->set_authorization_basic(
+            i_username = i_username
+            i_password = i_password
+        ).
+
+        DATA(lo_http_request) = lo_http_client->get_http_request( ).
+
+        DATA(lo_http_response) = lo_http_client->execute(
+            i_method   = if_web_http_client=>get
+        ).
+
+        text                          = lo_http_response->get_text( ).
+        DATA(status)                  = lo_http_response->get_status( ).
+        DATA(response_header_fields)  = lo_http_response->get_header_fields( ).
+
+        REPLACE '<d:SAP_UUID>'    IN text WITH '***SAP_UUID***'.
+        REPLACE '</d:SAP_UUID>'   IN text WITH '***SAP_UUID***'.
+        SPLIT text AT '***SAP_UUID***' INTO s1 s2 s3.
+
+        DATA(sap_uuid) = s2.
+
+        CONCATENATE
+                'https://'
+                system_url(8) " my404898
+                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
+                '(guid''' sap_uuid ''')' " '(guid''91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc'')'
+            INTO i_url.
+
+        http_destination = cl_http_destination_provider=>create_by_url( i_url = i_url ).
+
+        lo_http_client = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
+
+        lo_http_client->get_http_request( )->set_authorization_basic(
+            i_username = i_username
+            i_password = i_password
+        ).
+
+        lo_http_request = lo_http_client->get_http_request( ).
+
+
+*       Get Token:
+
+        lo_http_request->set_header_field(
+            i_name  = 'x-csrf-token'
+            i_value = 'fetch'
+        ).
+
+        lo_http_response = lo_http_client->execute(
+            i_method   = if_web_http_client=>get
+        ).
+
+        text                   = lo_http_response->get_text( ).
+        status                 = lo_http_response->get_status( ).
+        response_header_fields = lo_http_response->get_header_fields( ).
+
+        READ TABLE response_header_fields WITH KEY name = 'x-csrf-token' INTO DATA(field).
+        IF ( sy-subrc = 0 ).
+            token = field-value.
+        ENDIF.
+
+
+*       Update Codes:
+
+        DATA i_fields TYPE if_web_http_request=>name_value_pairs.
+        APPEND VALUE #(
+            name  = 'x-csrf-token'
+            value = token " '5iGZK1qT45Vi4UfHYazbPQ=='
+        )
+        TO i_fields.
+        APPEND VALUE #(
+            name  = 'Content-Type'
+            value = 'application/json'
+        )
+        TO i_fields.
+*        APPEND VALUE #(
+*            name  = 'Content-Length'
+*            value = '1000'
+*        )
+*        TO i_fields.
+
+        lo_http_request->set_header_fields(
+          EXPORTING
+            i_fields = i_fields
+*          RECEIVING
+*            r_value  =
+        ).
+
+        CONCATENATE
+                '{'
+                '"ARTICLE_CODE":"' i_article_code '",'
+                '"COLOR_CODE":"' i_color_code '",'
+                '"PRICAT_CODE":"' i_pricat_code '",'
+                '"SERIES_CODE":"' i_series_code '"'
+                '}'
+            INTO
+                body.
+
+        lo_http_request->set_text(
+          EXPORTING
+            i_text   = body
+*            i_offset = 0
+*            i_length = -1
+*          RECEIVING
+*            r_value  =
+        ).
+
+        lo_http_response = lo_http_client->execute(
+            i_method   = if_web_http_client=>put
+        ).
+
+        text                      = lo_http_response->get_text( ).
+        status                    = lo_http_response->get_status( ).
+        response_header_fields    = lo_http_response->get_header_fields( ).
+
+
+*       Read Descriptions
+
+        lo_http_response = lo_http_client->execute(
+            i_method   = if_web_http_client=>get
+        ).
+
+        text                    = lo_http_response->get_text( ).
+        status                  = lo_http_response->get_status( ).
+        response_header_fields  = lo_http_response->get_header_fields( ).
+
+        REPLACE '<d:ARTICLE_DESCRIPTION>'   IN text WITH '***ARTICLE_DESCRIPTION***'.
+        REPLACE '</d:ARTICLE_DESCRIPTION>'  IN text WITH '***ARTICLE_DESCRIPTION***'.
+        SPLIT text AT '***ARTICLE_DESCRIPTION***' INTO s1 s2 s3.
+        o_article_description = s2.
+        o_article_code        = i_article_code.
+
+        REPLACE '<d:COLOR_DESCRIPTION>'     IN text WITH '***COLOR_DESCRIPTION***'.
+        REPLACE '</d:COLOR_DESCRIPTION>'    IN text WITH '***COLOR_DESCRIPTION***'.
+        SPLIT text AT '***COLOR_DESCRIPTION***' INTO s1 s2 s3.
+        o_color_description = s2.
+        o_color_code        = i_color_code.
+
+        REPLACE '<d:PRICAT_DESCRIPTION>'     IN text WITH '***PRICAT_DESCRIPTION***'.
+        REPLACE '</d:PRICAT_DESCRIPTION>'    IN text WITH '***PRICAT_DESCRIPTION***'.
+        SPLIT text AT '***PRICAT_DESCRIPTION***' INTO s1 s2 s3.
+        o_pricat_description = s2.
+        o_pricat_code        = i_pricat_code.
+
+        REPLACE '<d:SERIES_DESCRIPTION>'     IN text WITH '***SERIES_DESCRIPTION***'.
+        REPLACE '</d:SERIES_DESCRIPTION>'    IN text WITH '***SERIES_DESCRIPTION***'.
+        SPLIT text AT '***SERIES_DESCRIPTION***' INTO s1 s2 s3.
+        o_series_description = s2.
+        o_series_code        = i_series_code.
+
+    CATCH cx_web_message_error INTO DATA(lx_web_message_error).
+      " Handle Exception
+*      RAISE SHORTDUMP lx_web_message_error.
+
+    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
+      " Handle Exception
+*      RAISE SHORTDUMP lx_abap_context_info_error.
+
+    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
+      " Handle remote Exception
+*      RAISE SHORTDUMP lx_remote.
+
+    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
+      " Handle Exception
+*      RAISE SHORTDUMP lx_gateway.
+
+    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
+      " Handle Exception
+*      RAISE SHORTDUMP lx_web_http_client_error.
+
+    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
+        "handle exception
+*      RAISE SHORTDUMP lx_http_dest_provider_error.
+
+    ENDTRY.
+
+  ENDMETHOD. " get_custom_fields_internal
 
 ENDCLASS. " lhc_pricat IMPLEMENTATION
 

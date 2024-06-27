@@ -13,9 +13,16 @@ association [0..1] to I_Division as _Division on $projection.Division = _Divisio
     salesorganization as SalesOrganization,
     distributionchannel as DistributionChannel,
     division as Division,
-    productseries as ProductSeries,
+    pricingdate as PricingDate,
     released as Released,
     
+    productseries as ProductSeries,
+    salesstatus as SalesStatus,
+    producttypes as ProductTypes,
+    colors as Colors,
+    collections as Collections,
+    rowlimit as RowLimit,
+
     createdby as CreatedBy,
     createdat as CreatedAt,
     lastchangedby as LastChangedBy,

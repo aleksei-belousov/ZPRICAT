@@ -31,60 +31,100 @@ annotate entity ZC_PRODUCT_006 with
     @UI.hidden: true
     PricatUUID;
 
-    @UI: {  lineItem:       [ { position: 10, label: 'Pricat Group Number', cssDefault.width: '100px' } ],
-            identification: [ { position: 10, label: 'Pricat Group Number' } ] }
-    @UI.hidden: true
+    @UI: {  lineItem:       [ { position: 20, label: 'Pricat Code', cssDefault.width: '100px' } ],
+            identification: [ { position: 20, label: 'Pricat Code' } ] }
+    //@UI.hidden: true
     PricatGroupNumber;
 
-    @UI: {  lineItem:       [ { position: 20, label: 'Pricat Name', cssDefault.width: '100px' } ],
-            identification: [ { position: 20, label: 'Pricat Name' } ] }
+    @UI: {  lineItem:       [ { position: 30, label: 'Pricat Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 30, label: 'Pricat Name' } ] }
     //@UI.hidden: true
     PricatName;
 
-    @UI: {  lineItem:       [ { position: 30, label: 'Series Name', cssDefault.width: '100px' } ],
-            identification: [ { position: 30, label: 'Series Name' } ] }
+    @UI: {  lineItem:       [ { position: 40, label: 'Series Code', cssDefault.width: '100px' } ],
+            identification: [ { position: 40, label: 'Series Code' } ] }
+    //@UI.hidden: true
+    Series;
+
+    @UI: {  lineItem:       [ { position: 50, label: 'Series Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 50, label: 'Series Name' } ] }
     //@UI.hidden: true
     SeriesName;
 
-    @UI: {  lineItem:       [ { position: 40, label: 'Article Name', cssDefault.width: '100px' } ],
-            identification: [ { position: 40, label: 'Article Name' } ] }
+    @UI: {  lineItem:       [ { position: 60, label: 'Article Code', cssDefault.width: '100px' } ],
+            identification: [ { position: 60, label: 'Article Code' } ] }
+    //@UI.hidden: true
+    Article; 
+
+    @UI: {  lineItem:       [ { position: 70, label: 'Article Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 70, label: 'Article Name' } ] }
     //@UI.hidden: true
     ArticleName; 
 
-    @UI: {  lineItem:       [ { position: 50, label: 'BackSize', cssDefault.width: '100px' } ],
-            identification: [ { position: 50, label: 'BackSize' } ] }
-    //@UI.hidden: true
-    BackSize;
-
-    @UI: {  lineItem:       [ { position: 60, label: 'CupSize', cssDefault.width: '100px' } ],
-            identification: [ { position: 60, label: 'CupSize' } ] }
-    //@UI.hidden: true
-    CupSize;
-
-    @UI: {  lineItem:       [ { position: 70, label: 'Color', cssDefault.width: '100px' } ],
-            identification: [ { position: 70, label: 'Color' } ] }
+    @UI: {  lineItem:       [ { position: 80, label: 'Color', cssDefault.width: '100px' } ],
+            identification: [ { position: 80, label: 'Color' } ] }
     //@UI.hidden: true
     Color;
 
-    @UI: {  lineItem:       [ { position: 80, label: 'Color Name', cssDefault.width: '100px' } ],
-            identification: [ { position: 80, label: 'Color Name' } ] }
+    @UI: {  lineItem:       [ { position: 90, label: 'Color Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 90, label: 'Color Name' } ] }
     //@UI.hidden: true
     ColorName;
 
-    @UI: {  lineItem:       [ { position: 90, label: 'GTIN', cssDefault.width: '100px' } ],
-            identification: [ { position: 90, label: 'GTIN' } ] }
+    @UI: {  lineItem:       [ { position: 100, label: 'BackSize', cssDefault.width: '100px' } ],
+            identification: [ { position: 100, label: 'BackSize' } ] }
+    //@UI.hidden: true
+    BackSize;
+
+    @UI: {  lineItem:       [ { position: 110, label: 'CupSize', cssDefault.width: '100px' } ],
+            identification: [ { position: 110, label: 'CupSize' } ] }
+    //@UI.hidden: true
+    CupSize;
+
+    @UI: {  lineItem:       [ { position: 120, label: 'GTIN', cssDefault.width: '100px' } ],
+            identification: [ { position: 120, label: 'GTIN' } ] }
     //@UI.hidden: true
     GTIN;
 
-    @UI: {  lineItem:       [ { position: 100, label: 'Material Group', cssDefault.width: '100px' } ],
-            identification: [ { position: 100, label: 'Material Group' } ] }
+    @UI: {  lineItem:       [ { position: 130, label: 'Material Group', cssDefault.width: '100px' } ],
+            identification: [ { position: 130, label: 'Material Group' } ] }
     //@UI.hidden: true
     ProductGroup;
 
-    @UI: {  lineItem:       [ { position: 110, label: 'Product Description', cssDefault.width: '100px' } ],
-            identification: [ { position: 110, label: 'Product Description' } ] }
+    @UI: {  lineItem:       [ { position: 140, label: 'Product Description', cssDefault.width: '100px' } ],
+            identification: [ { position: 140, label: 'Product Description' } ] }
     //@UI.hidden: true
     ProductName;
+
+    @UI: {  lineItem:       [ { position: 150, label: 'Cross-Dist. Chain Status', cssDefault.width: '100px' } ],
+            identification: [ { position: 150, label: 'Cross-Distribution Chain Status' } ] }
+    //@UI.hidden: true
+    SalesStatus;
+
+    @UI: {  lineItem:       [ { position: 160, label: 'Cross-Dist. Chain Status Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 160, label: 'Cross-Distribution Chain Status Name' } ] }
+    @UI.hidden: true
+    SalesStatusName;
+
+    @UI: {  lineItem:       [ { position: 170, label: 'Product Type', cssDefault.width: '100px' } ],
+            identification: [ { position: 170, label: 'Product Type' } ] }
+    //@UI.hidden: true
+    ProductType;
+
+    @UI: {  lineItem:       [ { position: 180, label: 'Product Type Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 180, label: 'Product Type Name' } ] }
+    @UI.hidden: true
+    ProductTypeName;
+
+    @UI: {  lineItem:       [ { position: 190, label: 'Collection', cssDefault.width: '100px' } ],
+            identification: [ { position: 190, label: 'Collection' } ] }
+    //@UI.hidden: true
+    ZCollection;
+
+    @UI: {  lineItem:       [ { position: 200, label: 'Collection Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 200, label: 'Collection Name' } ] }
+    @UI.hidden: true
+    ZCollectionName;
 
     @UI.hidden: true
     ProductURL;

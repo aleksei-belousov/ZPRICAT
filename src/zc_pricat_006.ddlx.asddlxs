@@ -11,12 +11,40 @@ annotate entity ZC_PRICAT_006 with
 
     @UI.facet: [
         // Price Catalog (header) 
+        /*
         {
-            id:            'Pricat',
-            purpose:       #STANDARD,
-            type:          #IDENTIFICATION_REFERENCE,
-            label:         'Price Catalog',
-            position:      10
+            id:           'Pricat',
+            purpose:      #STANDARD,
+            type:         #IDENTIFICATION_REFERENCE,
+            label:        'Price Catalog',
+            position:     10,
+            targetQualifier: 'Pricat' 
+        },
+        */
+        // Price Catalog (header) 
+        {
+            id:           'Pricat',
+            type:         #COLLECTION,
+            label:        'Price Catalog',
+            position:     10
+        },
+        // Fields (header) 
+        {
+            id:           'Fields',
+            type:         #FIELDGROUP_REFERENCE,
+            label:        'Fields (header)',
+            position:     10,
+            parentId: 'Pricat',
+            targetQualifier: 'Fields'
+        },
+        // Filters (header) 
+        {
+            id:           'Filters',
+            type:         #FIELDGROUP_REFERENCE,
+            label:        'Filters (for products selection)',
+            position:     20,
+            parentId: 'Pricat',
+            targetQualifier: 'Filters'
         },
         // Customers
         {
@@ -25,7 +53,7 @@ annotate entity ZC_PRICAT_006 with
             id:           'CustopmerUUID',
             purpose:      #STANDARD,
             type:         #LINEITEM_REFERENCE,
-            position:     20,
+            position:     30,
             targetElement: '_Customer'
          },
         // Products
@@ -35,7 +63,7 @@ annotate entity ZC_PRICAT_006 with
             id:           'ProductUUID',
             purpose:      #STANDARD,
             type:         #LINEITEM_REFERENCE,
-            position:     30,
+            position:     40,
             targetElement: '_Product'
          }
     ]
@@ -44,40 +72,85 @@ annotate entity ZC_PRICAT_006 with
     PricatUUID;
 
     @UI: {  lineItem:       [ { position: 10, label: 'Price Catalog ID', cssDefault.width: '200px' } ],
-            identification: [ { position: 10, label: 'Price Catalog ID' }, 
-                              { type: #FOR_ACTION, dataAction: 'release', label: 'Release', position: 1 },
-                              { type: #FOR_ACTION, dataAction: 'add_pricat_customers',      label: 'Add Pricat Customers',      position: 2 },
-                              { type: #FOR_ACTION, dataAction: 'add_promotion_customers',   label: 'Add Promotion Customers',   position: 3 },
-                              { type: #FOR_ACTION, dataAction: 'add_all_series',            label: 'Add All Series',            position: 4 } ] }
+            identification: [ { position: 10, label: 'Price Catalog ID', qualifier: 'Fields'  }, 
+                              { type: #FOR_ACTION, dataAction: 'release',                       label: 'Release',                       position: 1 },
+                              { type: #FOR_ACTION, dataAction: 'add_pricat_customers',          label: 'Add Pricat Customers',          position: 2 },
+                              { type: #FOR_ACTION, dataAction: 'add_promotion_customers',       label: 'Add Promotion Customers',       position: 3 },
+                              { type: #FOR_ACTION, dataAction: 'add_products_based_on_filters', label: 'Add Products Based On Filters', position: 4 } ],
+            fieldGroup:     [ { position: 10, label: 'Price Catalog ID', qualifier: 'Fields' } ] }
     //@UI.hidden: true
     PricatID;
 
     @UI: {  lineItem:       [ { position: 20, label: 'Sales Organization', cssDefault.width: '200px' } ],
-            identification: [ { position: 20, label: 'Sales Organization' } ] }
+            identification: [ { position: 20, label: 'Sales Organization', qualifier: 'Fields' } ],
+            fieldGroup:     [ { position: 20, label: 'Sales Organization', qualifier: 'Fields' } ] }
     //@UI.hidden: true
     SalesOrganization;
 
     @UI: {  lineItem:       [ { position: 30, label: 'Distribution Channel', cssDefault.width: '200px' } ],
-            identification: [ { position: 30, label: 'Distribution Channel' } ] }
+            identification: [ { position: 30, label: 'Distribution Channel', qualifier: 'Fields' } ],
+            fieldGroup:     [ { position: 30, label: 'Distribution Channel', qualifier: 'Fields' } ] }
     //@UI.hidden: true
     DistributionChannel;
 
     @UI: {  lineItem:       [ { position: 40, label: 'Division', cssDefault.width: '200px' } ],
-            identification: [ { position: 40, label: 'Division' } ] }
+            identification: [ { position: 40, label: 'Division', qualifier: 'Fields' } ],
+            fieldGroup:     [ { position: 40, label: 'Division', qualifier: 'Fields' } ] }
     //@UI.hidden: true
     Division;
 
-
-    @UI: {  lineItem:       [ { position: 50, label: 'Product Series', cssDefault.width: '200px' } ],
-            identification: [ { position: 50, label: 'Product Series' } ] }
+    @UI: {  lineItem:       [ { position: 50, label: 'Pricing Date', cssDefault.width: '100px' } ],
+            identification: [ { position: 50, label: 'Pricing Date', qualifier: 'Fields' } ],
+            fieldGroup:     [ { position: 50, label: 'Pricing Date', qualifier: 'Fields' } ] }
     //@UI.hidden: true
-    ProductSeries;
+    PricingDate;
+
 
     @UI: {  lineItem:       [ { position: 60, label: 'Released', cssDefault.width: '100px' } ],
-            identification: [ { position: 60, label: 'Released' } ] }
+            identification: [ { position: 60, label: 'Released', qualifier: 'Fields' } ],
+            fieldGroup:     [ { position: 60, label: 'Released', qualifier: 'Fields' } ] }
     //@UI.hidden: true
     Released;
 
+
+    /* Selection criteria */
+    @UI: {  lineItem:       [ { position: 70, label: 'Product Series', cssDefault.width: '200px' } ],
+            identification: [ { position: 70, label: 'Product Series', qualifier: 'Filters' } ],
+            fieldGroup:     [ { position: 70, label: 'Product Series', qualifier: 'Filters' } ] }
+    //@UI.hidden: true
+    ProductSeries;
+
+    @UI: {  lineItem:       [ { position: 80, label: 'Cross-Dist. Chain Status', cssDefault.width: '200px' } ],
+            identification: [ { position: 80, label: 'Cross-Distribution Chain Status', qualifier: 'Filters' } ],
+            fieldGroup:     [ { position: 80, label: 'Cross-Distribution Chain Status', qualifier: 'Filters' } ] }
+    //@UI.hidden: true
+    SalesStatus;
+
+    @UI: {  lineItem:       [ { position: 90, label: 'Product Types', cssDefault.width: '200px' } ],
+            identification: [ { position: 90, label: 'Product Types', qualifier: 'Filters' } ],
+            fieldGroup:     [ { position: 90, label: 'Product Types', qualifier: 'Filters' } ] }
+    //@UI.hidden: true
+    ProductTypes;
+    
+    @UI: {  lineItem:       [ { position: 100, label: 'Colors', cssDefault.width: '200px' } ],
+            identification: [ { position: 100, label: 'Colors', qualifier: 'Filters' } ],
+            fieldGroup:     [ { position: 100, label: 'Colors', qualifier: 'Filters' } ] }
+    //@UI.hidden: true
+    Colors;
+
+    @UI: {  lineItem:       [ { position: 110, label: 'Collections', cssDefault.width: '200px' } ],
+            identification: [ { position: 110, label: 'Collections', qualifier: 'Filters' } ],
+            fieldGroup:     [ { position: 110, label: 'Collections', qualifier: 'Filters' } ] }
+    //@UI.hidden: true
+    Collections;
+
+    @UI: {  lineItem:       [ { position: 120, label: 'Row Limit', cssDefault.width: '200px' } ],
+            identification: [ { position: 120, label: 'Row Limit', qualifier: 'Filters' } ],
+            fieldGroup:     [ { position: 120, label: 'Row Limit', qualifier: 'Filters' } ] }
+    //@UI.hidden: true
+    RowLimit;
+
+    /* Administrative data */
     @UI.hidden: true
     CreatedBy;
 

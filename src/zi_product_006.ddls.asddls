@@ -9,7 +9,9 @@ association to parent ZI_PRICAT_006 as _Pricat on $projection.PricatUUID = _Pric
     pricatuuid as PricatUUID,
     pricatgroupnumber as PricatGroupNumber,
     pricatname as PricatName,
+    series as Series,
     seriesname as SeriesName,
+    article as Article, 
     articlename as ArticleName, 
     backsize as BackSize,
     cupsize as CupSize,
@@ -18,6 +20,14 @@ association to parent ZI_PRICAT_006 as _Pricat on $projection.PricatUUID = _Pric
     gtin as GTIN,
     productgroup as ProductGroup,
     productname as ProductName,
+    
+    salesstatus as SalesStatus,
+    salesstatusname as SalesStatusName,
+    producttype as ProductType,
+    producttypename as ProductTypeName,
+    zcollection as ZCollection,
+    zcollectionname as ZCollectionName,
+
     producturl as ProductURL,
 
     createdby as CreatedBy,
