@@ -6,20 +6,20 @@ CLASS lhc_product DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
 ******** Internal Methods *********
 
-*   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-    METHODS get_custom_fields_internal
-        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
-                  VALUE(i_color_code)           TYPE string OPTIONAL
-                  VALUE(i_pricat_code)          TYPE string OPTIONAL
-                  VALUE(i_series_code)          TYPE string OPTIONAL
-        EXPORTING VALUE(o_article_description)  TYPE string
-                  VALUE(o_color_description)    TYPE string
-                  VALUE(o_pricat_description)   TYPE string
-                  VALUE(o_series_description)   TYPE string
-                  VALUE(o_article_code)         TYPE string
-                  VALUE(o_color_code)           TYPE string
-                  VALUE(o_pricat_code)          TYPE string
-                  VALUE(o_series_code)          TYPE string.
+**   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+*    METHODS get_custom_fields_internal
+*        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
+*                  VALUE(i_color_code)           TYPE string OPTIONAL
+*                  VALUE(i_pricat_code)          TYPE string OPTIONAL
+*                  VALUE(i_series_code)          TYPE string OPTIONAL
+*        EXPORTING VALUE(o_article_description)  TYPE string
+*                  VALUE(o_color_description)    TYPE string
+*                  VALUE(o_pricat_description)   TYPE string
+*                  VALUE(o_series_description)   TYPE string
+*                  VALUE(o_article_code)         TYPE string
+*                  VALUE(o_color_code)           TYPE string
+*                  VALUE(o_pricat_code)          TYPE string
+*                  VALUE(o_series_code)          TYPE string.
 
 ENDCLASS. " lhc_product DEFINITION
 
@@ -213,226 +213,226 @@ CLASS lhc_product IMPLEMENTATION.
 
   ENDMETHOD. " on_product_modify
 
-*   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-  METHOD get_custom_fields_internal.
-
-    DATA system_url TYPE string.
-
-    DATA i_username TYPE string VALUE 'INBOUND_USER'.
-    DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-
-    DATA token      TYPE string.
-    DATA body       TYPE string.
-    DATA text       TYPE string.
-    DATA s1         TYPE string.
-    DATA s2         TYPE string.
-    DATA s3         TYPE string.
-
-    TRY.
-
-*  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS(guid'91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc')'.
-*  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'.
-
-        system_url = cl_abap_context_info=>get_system_url( ).
-
-
-*       Read list of objects and get UUID of the first one:
-
-        CONCATENATE
-                'https://'
-                system_url(8) " my404898
-                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-            INTO DATA(i_url).
-
-        IF ( system_url(8) = 'my404907' ). " test
-            i_username  = 'INBOUND_USER'.
-            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-        ENDIF.
-        IF ( system_url(8) = 'my410080' ). " prod
-            i_username  = 'INBOUND_USER'.
-            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
-        ENDIF.
-
-        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-
-        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-
-        lo_http_client->get_http_request( )->set_authorization_basic(
-            i_username = i_username
-            i_password = i_password
-        ).
-
-        DATA(lo_http_request) = lo_http_client->get_http_request( ).
-
-        DATA(lo_http_response) = lo_http_client->execute(
-            i_method   = if_web_http_client=>get
-        ).
-
-        text                          = lo_http_response->get_text( ).
-        DATA(status)                  = lo_http_response->get_status( ).
-        DATA(response_header_fields)  = lo_http_response->get_header_fields( ).
-
-        REPLACE '<d:SAP_UUID>'    IN text WITH '***SAP_UUID***'.
-        REPLACE '</d:SAP_UUID>'   IN text WITH '***SAP_UUID***'.
-        SPLIT text AT '***SAP_UUID***' INTO s1 s2 s3.
-
-        DATA(sap_uuid) = s2.
-
-        CONCATENATE
-                'https://'
-                system_url(8) " my404898
-                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-                '(guid''' sap_uuid ''')' " '(guid''91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc'')'
-            INTO i_url.
-
-        http_destination = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-
-        lo_http_client = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-
-        lo_http_client->get_http_request( )->set_authorization_basic(
-            i_username = i_username
-            i_password = i_password
-        ).
-
-        lo_http_request = lo_http_client->get_http_request( ).
-
-
-*       Get Token:
-
-        lo_http_request->set_header_field(
-            i_name  = 'x-csrf-token'
-            i_value = 'fetch'
-        ).
-
-        lo_http_response = lo_http_client->execute(
-            i_method   = if_web_http_client=>get
-        ).
-
-        text                   = lo_http_response->get_text( ).
-        status                 = lo_http_response->get_status( ).
-        response_header_fields = lo_http_response->get_header_fields( ).
-
-        READ TABLE response_header_fields WITH KEY name = 'x-csrf-token' INTO DATA(field).
-        IF ( sy-subrc = 0 ).
-            token = field-value.
-        ENDIF.
-
-
-*       Update Codes:
-
-        DATA i_fields TYPE if_web_http_request=>name_value_pairs.
-        APPEND VALUE #(
-            name  = 'x-csrf-token'
-            value = token " '5iGZK1qT45Vi4UfHYazbPQ=='
-        )
-        TO i_fields.
-        APPEND VALUE #(
-            name  = 'Content-Type'
-            value = 'application/json'
-        )
-        TO i_fields.
+**   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+*  METHOD get_custom_fields_internal.
+*
+*    DATA system_url TYPE string.
+*
+*    DATA i_username TYPE string VALUE 'INBOUND_USER'.
+*    DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+*
+*    DATA token      TYPE string.
+*    DATA body       TYPE string.
+*    DATA text       TYPE string.
+*    DATA s1         TYPE string.
+*    DATA s2         TYPE string.
+*    DATA s3         TYPE string.
+*
+*    TRY.
+*
+**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS(guid'91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc')'.
+**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'.
+*
+*        system_url = cl_abap_context_info=>get_system_url( ).
+*
+*
+**       Read list of objects and get UUID of the first one:
+*
+*        CONCATENATE
+*                'https://'
+*                system_url(8) " my404898
+*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
+*            INTO DATA(i_url).
+*
+*        IF ( system_url(8) = 'my404907' ). " test
+*            i_username  = 'INBOUND_USER'.
+*            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+*        ENDIF.
+*        IF ( system_url(8) = 'my410080' ). " prod
+*            i_username  = 'INBOUND_USER'.
+*            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+*        ENDIF.
+*
+*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
+*
+*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
+*
+*        lo_http_client->get_http_request( )->set_authorization_basic(
+*            i_username = i_username
+*            i_password = i_password
+*        ).
+*
+*        DATA(lo_http_request) = lo_http_client->get_http_request( ).
+*
+*        DATA(lo_http_response) = lo_http_client->execute(
+*            i_method   = if_web_http_client=>get
+*        ).
+*
+*        text                          = lo_http_response->get_text( ).
+*        DATA(status)                  = lo_http_response->get_status( ).
+*        DATA(response_header_fields)  = lo_http_response->get_header_fields( ).
+*
+*        REPLACE '<d:SAP_UUID>'    IN text WITH '***SAP_UUID***'.
+*        REPLACE '</d:SAP_UUID>'   IN text WITH '***SAP_UUID***'.
+*        SPLIT text AT '***SAP_UUID***' INTO s1 s2 s3.
+*
+*        DATA(sap_uuid) = s2.
+*
+*        CONCATENATE
+*                'https://'
+*                system_url(8) " my404898
+*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
+*                '(guid''' sap_uuid ''')' " '(guid''91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc'')'
+*            INTO i_url.
+*
+*        http_destination = cl_http_destination_provider=>create_by_url( i_url = i_url ).
+*
+*        lo_http_client = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
+*
+*        lo_http_client->get_http_request( )->set_authorization_basic(
+*            i_username = i_username
+*            i_password = i_password
+*        ).
+*
+*        lo_http_request = lo_http_client->get_http_request( ).
+*
+*
+**       Get Token:
+*
+*        lo_http_request->set_header_field(
+*            i_name  = 'x-csrf-token'
+*            i_value = 'fetch'
+*        ).
+*
+*        lo_http_response = lo_http_client->execute(
+*            i_method   = if_web_http_client=>get
+*        ).
+*
+*        text                   = lo_http_response->get_text( ).
+*        status                 = lo_http_response->get_status( ).
+*        response_header_fields = lo_http_response->get_header_fields( ).
+*
+*        READ TABLE response_header_fields WITH KEY name = 'x-csrf-token' INTO DATA(field).
+*        IF ( sy-subrc = 0 ).
+*            token = field-value.
+*        ENDIF.
+*
+*
+**       Update Codes:
+*
+*        DATA i_fields TYPE if_web_http_request=>name_value_pairs.
 *        APPEND VALUE #(
-*            name  = 'Content-Length'
-*            value = '1000'
+*            name  = 'x-csrf-token'
+*            value = token " '5iGZK1qT45Vi4UfHYazbPQ=='
 *        )
 *        TO i_fields.
-
-        lo_http_request->set_header_fields(
-          EXPORTING
-            i_fields = i_fields
-*          RECEIVING
-*            r_value  =
-        ).
-
-        CONCATENATE
-                '{'
-                '"ARTICLE_CODE":"' i_article_code '",'
-                '"COLOR_CODE":"' i_color_code '",'
-                '"PRICAT_CODE":"' i_pricat_code '",'
-                '"SERIES_CODE":"' i_series_code '"'
-                '}'
-            INTO
-                body.
-
-        lo_http_request->set_text(
-          EXPORTING
-            i_text   = body
-*            i_offset = 0
-*            i_length = -1
-*          RECEIVING
-*            r_value  =
-        ).
-
-        lo_http_response = lo_http_client->execute(
-            i_method   = if_web_http_client=>put
-        ).
-
-        text                      = lo_http_response->get_text( ).
-        status                    = lo_http_response->get_status( ).
-        response_header_fields    = lo_http_response->get_header_fields( ).
-
-
-*       Read Descriptions
-
-        lo_http_response = lo_http_client->execute(
-            i_method   = if_web_http_client=>get
-        ).
-
-        text                    = lo_http_response->get_text( ).
-        status                  = lo_http_response->get_status( ).
-        response_header_fields  = lo_http_response->get_header_fields( ).
-
-        REPLACE '<d:ARTICLE_DESCRIPTION>'   IN text WITH '***ARTICLE_DESCRIPTION***'.
-        REPLACE '</d:ARTICLE_DESCRIPTION>'  IN text WITH '***ARTICLE_DESCRIPTION***'.
-        SPLIT text AT '***ARTICLE_DESCRIPTION***' INTO s1 s2 s3.
-        o_article_description = s2.
-        o_article_code        = i_article_code.
-
-        REPLACE '<d:COLOR_DESCRIPTION>'     IN text WITH '***COLOR_DESCRIPTION***'.
-        REPLACE '</d:COLOR_DESCRIPTION>'    IN text WITH '***COLOR_DESCRIPTION***'.
-        SPLIT text AT '***COLOR_DESCRIPTION***' INTO s1 s2 s3.
-        o_color_description = s2.
-        o_color_code        = i_color_code.
-
-        REPLACE '<d:PRICAT_DESCRIPTION>'     IN text WITH '***PRICAT_DESCRIPTION***'.
-        REPLACE '</d:PRICAT_DESCRIPTION>'    IN text WITH '***PRICAT_DESCRIPTION***'.
-        SPLIT text AT '***PRICAT_DESCRIPTION***' INTO s1 s2 s3.
-        o_pricat_description = s2.
-        o_pricat_code        = i_pricat_code.
-
-        REPLACE '<d:SERIES_DESCRIPTION>'     IN text WITH '***SERIES_DESCRIPTION***'.
-        REPLACE '</d:SERIES_DESCRIPTION>'    IN text WITH '***SERIES_DESCRIPTION***'.
-        SPLIT text AT '***SERIES_DESCRIPTION***' INTO s1 s2 s3.
-        o_series_description = s2.
-        o_series_code        = i_series_code.
-
-    CATCH cx_web_message_error INTO DATA(lx_web_message_error).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_web_message_error.
-
-    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_abap_context_info_error.
-
-    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-      " Handle remote Exception
-*      RAISE SHORTDUMP lx_remote.
-
-    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_gateway.
-
-    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_web_http_client_error.
-
-    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-        "handle exception
-*      RAISE SHORTDUMP lx_http_dest_provider_error.
-
-    ENDTRY.
-
-  ENDMETHOD. " get_custom_fields_internal
+*        APPEND VALUE #(
+*            name  = 'Content-Type'
+*            value = 'application/json'
+*        )
+*        TO i_fields.
+**        APPEND VALUE #(
+**            name  = 'Content-Length'
+**            value = '1000'
+**        )
+**        TO i_fields.
+*
+*        lo_http_request->set_header_fields(
+*          EXPORTING
+*            i_fields = i_fields
+**          RECEIVING
+**            r_value  =
+*        ).
+*
+*        CONCATENATE
+*                '{'
+*                '"ARTICLE_CODE":"' i_article_code '",'
+*                '"COLOR_CODE":"' i_color_code '",'
+*                '"PRICAT_CODE":"' i_pricat_code '",'
+*                '"SERIES_CODE":"' i_series_code '"'
+*                '}'
+*            INTO
+*                body.
+*
+*        lo_http_request->set_text(
+*          EXPORTING
+*            i_text   = body
+**            i_offset = 0
+**            i_length = -1
+**          RECEIVING
+**            r_value  =
+*        ).
+*
+*        lo_http_response = lo_http_client->execute(
+*            i_method   = if_web_http_client=>put
+*        ).
+*
+*        text                      = lo_http_response->get_text( ).
+*        status                    = lo_http_response->get_status( ).
+*        response_header_fields    = lo_http_response->get_header_fields( ).
+*
+*
+**       Read Descriptions
+*
+*        lo_http_response = lo_http_client->execute(
+*            i_method   = if_web_http_client=>get
+*        ).
+*
+*        text                    = lo_http_response->get_text( ).
+*        status                  = lo_http_response->get_status( ).
+*        response_header_fields  = lo_http_response->get_header_fields( ).
+*
+*        REPLACE '<d:ARTICLE_DESCRIPTION>'   IN text WITH '***ARTICLE_DESCRIPTION***'.
+*        REPLACE '</d:ARTICLE_DESCRIPTION>'  IN text WITH '***ARTICLE_DESCRIPTION***'.
+*        SPLIT text AT '***ARTICLE_DESCRIPTION***' INTO s1 s2 s3.
+*        o_article_description = s2.
+*        o_article_code        = i_article_code.
+*
+*        REPLACE '<d:COLOR_DESCRIPTION>'     IN text WITH '***COLOR_DESCRIPTION***'.
+*        REPLACE '</d:COLOR_DESCRIPTION>'    IN text WITH '***COLOR_DESCRIPTION***'.
+*        SPLIT text AT '***COLOR_DESCRIPTION***' INTO s1 s2 s3.
+*        o_color_description = s2.
+*        o_color_code        = i_color_code.
+*
+*        REPLACE '<d:PRICAT_DESCRIPTION>'     IN text WITH '***PRICAT_DESCRIPTION***'.
+*        REPLACE '</d:PRICAT_DESCRIPTION>'    IN text WITH '***PRICAT_DESCRIPTION***'.
+*        SPLIT text AT '***PRICAT_DESCRIPTION***' INTO s1 s2 s3.
+*        o_pricat_description = s2.
+*        o_pricat_code        = i_pricat_code.
+*
+*        REPLACE '<d:SERIES_DESCRIPTION>'     IN text WITH '***SERIES_DESCRIPTION***'.
+*        REPLACE '</d:SERIES_DESCRIPTION>'    IN text WITH '***SERIES_DESCRIPTION***'.
+*        SPLIT text AT '***SERIES_DESCRIPTION***' INTO s1 s2 s3.
+*        o_series_description = s2.
+*        o_series_code        = i_series_code.
+*
+*    CATCH cx_web_message_error INTO DATA(lx_web_message_error).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_web_message_error.
+*
+*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_abap_context_info_error.
+*
+*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
+*      " Handle remote Exception
+**      RAISE SHORTDUMP lx_remote.
+*
+*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_gateway.
+*
+*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_web_http_client_error.
+*
+*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
+*        "handle exception
+**      RAISE SHORTDUMP lx_http_dest_provider_error.
+*
+*    ENDTRY.
+*
+*  ENDMETHOD. " get_custom_fields_internal
 
 ENDCLASS. " lhc_product IMPLEMENTATION
 
@@ -591,20 +591,20 @@ CLASS lhc_pricat DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
 ******** Internal Methods *********
 
-*   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-    METHODS get_custom_fields_internal
-        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
-                  VALUE(i_color_code)           TYPE string OPTIONAL
-                  VALUE(i_pricat_code)          TYPE string OPTIONAL
-                  VALUE(i_series_code)          TYPE string OPTIONAL
-        EXPORTING VALUE(o_article_description)  TYPE string
-                  VALUE(o_color_description)    TYPE string
-                  VALUE(o_pricat_description)   TYPE string
-                  VALUE(o_series_description)   TYPE string
-                  VALUE(o_article_code)         TYPE string
-                  VALUE(o_color_code)           TYPE string
-                  VALUE(o_pricat_code)          TYPE string
-                  VALUE(o_series_code)          TYPE string.
+**   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+*    METHODS get_custom_fields_internal
+*        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
+*                  VALUE(i_color_code)           TYPE string OPTIONAL
+*                  VALUE(i_pricat_code)          TYPE string OPTIONAL
+*                  VALUE(i_series_code)          TYPE string OPTIONAL
+*        EXPORTING VALUE(o_article_description)  TYPE string
+*                  VALUE(o_color_description)    TYPE string
+*                  VALUE(o_pricat_description)   TYPE string
+*                  VALUE(o_series_description)   TYPE string
+*                  VALUE(o_article_code)         TYPE string
+*                  VALUE(o_color_code)           TYPE string
+*                  VALUE(o_pricat_code)          TYPE string
+*                  VALUE(o_series_code)          TYPE string.
 
 ENDCLASS. " lhc_pricat DEFINITION
 
@@ -755,6 +755,8 @@ CLASS lhc_pricat IMPLEMENTATION.
                 request_body = request_body && '<GTIN>' && product-GTIN && '</GTIN>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<MaterialGroup>' && product-ProductGroup && '</MaterialGroup>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ProductDescription>' && product-ProductName && '</ProductDescription>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<DTBGroup>' && product-DTBGroup && '</DTBGroup>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<DTBGroupName>' && product-DTBGroupName && '</DTBGroupName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '</Product>' && cl_abap_char_utilities=>cr_lf.
             ENDLOOP.
 
@@ -1186,226 +1188,226 @@ CLASS lhc_pricat IMPLEMENTATION.
 
   ENDMETHOD. " add_products_based_on_filters
 
-* Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-  METHOD get_custom_fields_internal.
-
-    DATA system_url TYPE string.
-
-    DATA i_username TYPE string VALUE 'INBOUND_USER'.
-    DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-
-    DATA token      TYPE string.
-    DATA body       TYPE string.
-    DATA text       TYPE string.
-    DATA s1         TYPE string.
-    DATA s2         TYPE string.
-    DATA s3         TYPE string.
-
-    TRY.
-
-*  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS(guid'91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc')'.
-*  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'.
-
-        system_url = cl_abap_context_info=>get_system_url( ).
-
-
-*       Read list of objects and get UUID of the first one:
-
-        CONCATENATE
-                'https://'
-                system_url(8) " my404898
-                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-            INTO DATA(i_url).
-
-        IF ( system_url(8) = 'my404907' ). " test
-            i_username  = 'INBOUND_USER'.
-            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-        ENDIF.
-        IF ( system_url(8) = 'my410080' ). " prod
-            i_username  = 'INBOUND_USER'.
-            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
-        ENDIF.
-
-        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-
-        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-
-        lo_http_client->get_http_request( )->set_authorization_basic(
-            i_username = i_username
-            i_password = i_password
-        ).
-
-        DATA(lo_http_request) = lo_http_client->get_http_request( ).
-
-        DATA(lo_http_response) = lo_http_client->execute(
-            i_method   = if_web_http_client=>get
-        ).
-
-        text                          = lo_http_response->get_text( ).
-        DATA(status)                  = lo_http_response->get_status( ).
-        DATA(response_header_fields)  = lo_http_response->get_header_fields( ).
-
-        REPLACE '<d:SAP_UUID>'    IN text WITH '***SAP_UUID***'.
-        REPLACE '</d:SAP_UUID>'   IN text WITH '***SAP_UUID***'.
-        SPLIT text AT '***SAP_UUID***' INTO s1 s2 s3.
-
-        DATA(sap_uuid) = s2.
-
-        CONCATENATE
-                'https://'
-                system_url(8) " my404898
-                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-                '(guid''' sap_uuid ''')' " '(guid''91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc'')'
-            INTO i_url.
-
-        http_destination = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-
-        lo_http_client = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-
-        lo_http_client->get_http_request( )->set_authorization_basic(
-            i_username = i_username
-            i_password = i_password
-        ).
-
-        lo_http_request = lo_http_client->get_http_request( ).
-
-
-*       Get Token:
-
-        lo_http_request->set_header_field(
-            i_name  = 'x-csrf-token'
-            i_value = 'fetch'
-        ).
-
-        lo_http_response = lo_http_client->execute(
-            i_method   = if_web_http_client=>get
-        ).
-
-        text                   = lo_http_response->get_text( ).
-        status                 = lo_http_response->get_status( ).
-        response_header_fields = lo_http_response->get_header_fields( ).
-
-        READ TABLE response_header_fields WITH KEY name = 'x-csrf-token' INTO DATA(field).
-        IF ( sy-subrc = 0 ).
-            token = field-value.
-        ENDIF.
-
-
-*       Update Codes:
-
-        DATA i_fields TYPE if_web_http_request=>name_value_pairs.
-        APPEND VALUE #(
-            name  = 'x-csrf-token'
-            value = token " '5iGZK1qT45Vi4UfHYazbPQ=='
-        )
-        TO i_fields.
-        APPEND VALUE #(
-            name  = 'Content-Type'
-            value = 'application/json'
-        )
-        TO i_fields.
+** Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+*  METHOD get_custom_fields_internal.
+*
+*    DATA system_url TYPE string.
+*
+*    DATA i_username TYPE string VALUE 'INBOUND_USER'.
+*    DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+*
+*    DATA token      TYPE string.
+*    DATA body       TYPE string.
+*    DATA text       TYPE string.
+*    DATA s1         TYPE string.
+*    DATA s2         TYPE string.
+*    DATA s3         TYPE string.
+*
+*    TRY.
+*
+**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS(guid'91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc')'.
+**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'.
+*
+*        system_url = cl_abap_context_info=>get_system_url( ).
+*
+*
+**       Read list of objects and get UUID of the first one:
+*
+*        CONCATENATE
+*                'https://'
+*                system_url(8) " my404898
+*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
+*            INTO DATA(i_url).
+*
+*        IF ( system_url(8) = 'my404907' ). " test
+*            i_username  = 'INBOUND_USER'.
+*            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
+*        ENDIF.
+*        IF ( system_url(8) = 'my410080' ). " prod
+*            i_username  = 'INBOUND_USER'.
+*            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
+*        ENDIF.
+*
+*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
+*
+*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
+*
+*        lo_http_client->get_http_request( )->set_authorization_basic(
+*            i_username = i_username
+*            i_password = i_password
+*        ).
+*
+*        DATA(lo_http_request) = lo_http_client->get_http_request( ).
+*
+*        DATA(lo_http_response) = lo_http_client->execute(
+*            i_method   = if_web_http_client=>get
+*        ).
+*
+*        text                          = lo_http_response->get_text( ).
+*        DATA(status)                  = lo_http_response->get_status( ).
+*        DATA(response_header_fields)  = lo_http_response->get_header_fields( ).
+*
+*        REPLACE '<d:SAP_UUID>'    IN text WITH '***SAP_UUID***'.
+*        REPLACE '</d:SAP_UUID>'   IN text WITH '***SAP_UUID***'.
+*        SPLIT text AT '***SAP_UUID***' INTO s1 s2 s3.
+*
+*        DATA(sap_uuid) = s2.
+*
+*        CONCATENATE
+*                'https://'
+*                system_url(8) " my404898
+*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
+*                '(guid''' sap_uuid ''')' " '(guid''91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc'')'
+*            INTO i_url.
+*
+*        http_destination = cl_http_destination_provider=>create_by_url( i_url = i_url ).
+*
+*        lo_http_client = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
+*
+*        lo_http_client->get_http_request( )->set_authorization_basic(
+*            i_username = i_username
+*            i_password = i_password
+*        ).
+*
+*        lo_http_request = lo_http_client->get_http_request( ).
+*
+*
+**       Get Token:
+*
+*        lo_http_request->set_header_field(
+*            i_name  = 'x-csrf-token'
+*            i_value = 'fetch'
+*        ).
+*
+*        lo_http_response = lo_http_client->execute(
+*            i_method   = if_web_http_client=>get
+*        ).
+*
+*        text                   = lo_http_response->get_text( ).
+*        status                 = lo_http_response->get_status( ).
+*        response_header_fields = lo_http_response->get_header_fields( ).
+*
+*        READ TABLE response_header_fields WITH KEY name = 'x-csrf-token' INTO DATA(field).
+*        IF ( sy-subrc = 0 ).
+*            token = field-value.
+*        ENDIF.
+*
+*
+**       Update Codes:
+*
+*        DATA i_fields TYPE if_web_http_request=>name_value_pairs.
 *        APPEND VALUE #(
-*            name  = 'Content-Length'
-*            value = '1000'
+*            name  = 'x-csrf-token'
+*            value = token " '5iGZK1qT45Vi4UfHYazbPQ=='
 *        )
 *        TO i_fields.
-
-        lo_http_request->set_header_fields(
-          EXPORTING
-            i_fields = i_fields
-*          RECEIVING
-*            r_value  =
-        ).
-
-        CONCATENATE
-                '{'
-                '"ARTICLE_CODE":"' i_article_code '",'
-                '"COLOR_CODE":"' i_color_code '",'
-                '"PRICAT_CODE":"' i_pricat_code '",'
-                '"SERIES_CODE":"' i_series_code '"'
-                '}'
-            INTO
-                body.
-
-        lo_http_request->set_text(
-          EXPORTING
-            i_text   = body
-*            i_offset = 0
-*            i_length = -1
-*          RECEIVING
-*            r_value  =
-        ).
-
-        lo_http_response = lo_http_client->execute(
-            i_method   = if_web_http_client=>put
-        ).
-
-        text                      = lo_http_response->get_text( ).
-        status                    = lo_http_response->get_status( ).
-        response_header_fields    = lo_http_response->get_header_fields( ).
-
-
-*       Read Descriptions
-
-        lo_http_response = lo_http_client->execute(
-            i_method   = if_web_http_client=>get
-        ).
-
-        text                    = lo_http_response->get_text( ).
-        status                  = lo_http_response->get_status( ).
-        response_header_fields  = lo_http_response->get_header_fields( ).
-
-        REPLACE '<d:ARTICLE_DESCRIPTION>'   IN text WITH '***ARTICLE_DESCRIPTION***'.
-        REPLACE '</d:ARTICLE_DESCRIPTION>'  IN text WITH '***ARTICLE_DESCRIPTION***'.
-        SPLIT text AT '***ARTICLE_DESCRIPTION***' INTO s1 s2 s3.
-        o_article_description = s2.
-        o_article_code        = i_article_code.
-
-        REPLACE '<d:COLOR_DESCRIPTION>'     IN text WITH '***COLOR_DESCRIPTION***'.
-        REPLACE '</d:COLOR_DESCRIPTION>'    IN text WITH '***COLOR_DESCRIPTION***'.
-        SPLIT text AT '***COLOR_DESCRIPTION***' INTO s1 s2 s3.
-        o_color_description = s2.
-        o_color_code        = i_color_code.
-
-        REPLACE '<d:PRICAT_DESCRIPTION>'     IN text WITH '***PRICAT_DESCRIPTION***'.
-        REPLACE '</d:PRICAT_DESCRIPTION>'    IN text WITH '***PRICAT_DESCRIPTION***'.
-        SPLIT text AT '***PRICAT_DESCRIPTION***' INTO s1 s2 s3.
-        o_pricat_description = s2.
-        o_pricat_code        = i_pricat_code.
-
-        REPLACE '<d:SERIES_DESCRIPTION>'     IN text WITH '***SERIES_DESCRIPTION***'.
-        REPLACE '</d:SERIES_DESCRIPTION>'    IN text WITH '***SERIES_DESCRIPTION***'.
-        SPLIT text AT '***SERIES_DESCRIPTION***' INTO s1 s2 s3.
-        o_series_description = s2.
-        o_series_code        = i_series_code.
-
-    CATCH cx_web_message_error INTO DATA(lx_web_message_error).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_web_message_error.
-
-    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_abap_context_info_error.
-
-    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-      " Handle remote Exception
-*      RAISE SHORTDUMP lx_remote.
-
-    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_gateway.
-
-    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-      " Handle Exception
-*      RAISE SHORTDUMP lx_web_http_client_error.
-
-    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-        "handle exception
-*      RAISE SHORTDUMP lx_http_dest_provider_error.
-
-    ENDTRY.
-
-  ENDMETHOD. " get_custom_fields_internal
+*        APPEND VALUE #(
+*            name  = 'Content-Type'
+*            value = 'application/json'
+*        )
+*        TO i_fields.
+**        APPEND VALUE #(
+**            name  = 'Content-Length'
+**            value = '1000'
+**        )
+**        TO i_fields.
+*
+*        lo_http_request->set_header_fields(
+*          EXPORTING
+*            i_fields = i_fields
+**          RECEIVING
+**            r_value  =
+*        ).
+*
+*        CONCATENATE
+*                '{'
+*                '"ARTICLE_CODE":"' i_article_code '",'
+*                '"COLOR_CODE":"' i_color_code '",'
+*                '"PRICAT_CODE":"' i_pricat_code '",'
+*                '"SERIES_CODE":"' i_series_code '"'
+*                '}'
+*            INTO
+*                body.
+*
+*        lo_http_request->set_text(
+*          EXPORTING
+*            i_text   = body
+**            i_offset = 0
+**            i_length = -1
+**          RECEIVING
+**            r_value  =
+*        ).
+*
+*        lo_http_response = lo_http_client->execute(
+*            i_method   = if_web_http_client=>put
+*        ).
+*
+*        text                      = lo_http_response->get_text( ).
+*        status                    = lo_http_response->get_status( ).
+*        response_header_fields    = lo_http_response->get_header_fields( ).
+*
+*
+**       Read Descriptions
+*
+*        lo_http_response = lo_http_client->execute(
+*            i_method   = if_web_http_client=>get
+*        ).
+*
+*        text                    = lo_http_response->get_text( ).
+*        status                  = lo_http_response->get_status( ).
+*        response_header_fields  = lo_http_response->get_header_fields( ).
+*
+*        REPLACE '<d:ARTICLE_DESCRIPTION>'   IN text WITH '***ARTICLE_DESCRIPTION***'.
+*        REPLACE '</d:ARTICLE_DESCRIPTION>'  IN text WITH '***ARTICLE_DESCRIPTION***'.
+*        SPLIT text AT '***ARTICLE_DESCRIPTION***' INTO s1 s2 s3.
+*        o_article_description = s2.
+*        o_article_code        = i_article_code.
+*
+*        REPLACE '<d:COLOR_DESCRIPTION>'     IN text WITH '***COLOR_DESCRIPTION***'.
+*        REPLACE '</d:COLOR_DESCRIPTION>'    IN text WITH '***COLOR_DESCRIPTION***'.
+*        SPLIT text AT '***COLOR_DESCRIPTION***' INTO s1 s2 s3.
+*        o_color_description = s2.
+*        o_color_code        = i_color_code.
+*
+*        REPLACE '<d:PRICAT_DESCRIPTION>'     IN text WITH '***PRICAT_DESCRIPTION***'.
+*        REPLACE '</d:PRICAT_DESCRIPTION>'    IN text WITH '***PRICAT_DESCRIPTION***'.
+*        SPLIT text AT '***PRICAT_DESCRIPTION***' INTO s1 s2 s3.
+*        o_pricat_description = s2.
+*        o_pricat_code        = i_pricat_code.
+*
+*        REPLACE '<d:SERIES_DESCRIPTION>'     IN text WITH '***SERIES_DESCRIPTION***'.
+*        REPLACE '</d:SERIES_DESCRIPTION>'    IN text WITH '***SERIES_DESCRIPTION***'.
+*        SPLIT text AT '***SERIES_DESCRIPTION***' INTO s1 s2 s3.
+*        o_series_description = s2.
+*        o_series_code        = i_series_code.
+*
+*    CATCH cx_web_message_error INTO DATA(lx_web_message_error).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_web_message_error.
+*
+*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_abap_context_info_error.
+*
+*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
+*      " Handle remote Exception
+**      RAISE SHORTDUMP lx_remote.
+*
+*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_gateway.
+*
+*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
+*      " Handle Exception
+**      RAISE SHORTDUMP lx_web_http_client_error.
+*
+*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
+*        "handle exception
+**      RAISE SHORTDUMP lx_http_dest_provider_error.
+*
+*    ENDTRY.
+*
+*  ENDMETHOD. " get_custom_fields_internal
 
 ENDCLASS. " lhc_pricat IMPLEMENTATION
 
