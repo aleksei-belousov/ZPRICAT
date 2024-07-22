@@ -76,23 +76,27 @@ CLASS lhc_product IMPLEMENTATION.
             DATA(i_color_code)      = CONV string( product-YY1_Color_PRD ).                 " '030'
             DATA(i_pricat_code)     = CONV string( product-YY1_PRICATGroup_PRD ).           " '21'
             DATA(i_series_code)     = CONV string( product-YY1_SeriesName_PRD ).            " '126'
+            DATA(i_dtbgroup_code)   = CONV string( product-YY1_DTBGroup_PRD ).              " '114'
 
 *            get_custom_fields_internal(
             zbp_i_pricat_006=>get_custom_fields_opt_internal(
               EXPORTING
-                 i_article_code        = i_article_code
-                 i_color_code          = i_color_code
-                 i_pricat_code         = i_pricat_code
-                 i_series_code         = i_series_code
+                 i_article_code         = i_article_code
+                 i_color_code           = i_color_code
+                 i_pricat_code          = i_pricat_code
+                 i_series_code          = i_series_code
+                 i_dtbgroup_code        = i_dtbgroup_code
               IMPORTING
-                 o_article_description = DATA(article_description)
-                 o_color_description   = DATA(color_description)
-                 o_pricat_description  = DATA(pricat_description)
-                 o_series_description  = DATA(series_description)
-                 o_article_code        = DATA(article_code)
-                 o_color_code          = DATA(color_code)
-                 o_pricat_code         = DATA(pricat_code)
-                 o_series_code         = DATA(series_code)
+                 o_article_description  = DATA(article_description)
+                 o_color_description    = DATA(color_description)
+                 o_pricat_description   = DATA(pricat_description)
+                 o_series_description   = DATA(series_description)
+                 o_dtbgroup_description = DATA(dtbgroup_description)
+                 o_article_code         = DATA(article_code)
+                 o_color_code           = DATA(color_code)
+                 o_pricat_code          = DATA(pricat_code)
+                 o_series_code          = DATA(series_code)
+                 o_dtbgroup_code        = DATA(dtbgroup_code)
             ).
 
         ENDIF.
@@ -158,6 +162,12 @@ CLASS lhc_product IMPLEMENTATION.
 *       ZCollection
         <entity>-ZCollection    = product-YY1_Collection_PRD.
 
+*       DTB Group
+        <entity>-DTBGroup       = product-YY1_DTBGroup_PRD.
+
+*       DTB Group Name
+        <entity>-DTBGroupName   = dtbgroup_description.
+
 *       ProductURL (link to Product)
         IF ( <entity>-ProductID IS NOT INITIAL ).
             <entity>-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && <entity>-ProductID && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
@@ -183,6 +193,8 @@ CLASS lhc_product IMPLEMENTATION.
             SalesStatus         = <entity>-SalesStatus
             ProductType         = <entity>-ProductType
             ZCollection         = <entity>-ZCollection
+            DTBGroup            = <entity>-DTBGroup
+            DTBGroupName        = <entity>-DTBGroupName
             ProductURL          = <entity>-ProductURL
          )
          TO it_product_update.
@@ -190,7 +202,7 @@ CLASS lhc_product IMPLEMENTATION.
         MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
             ENTITY Product
             UPDATE FIELDS (
-                PricatGroupNumber PricatName Series SeriesName Article ArticleName Color ColorName BackSize CupSize GTIN ProductGroup ProductName SalesStatus ProductType ZCollection ProductURL
+                PricatGroupNumber PricatName Series SeriesName Article ArticleName Color ColorName BackSize CupSize GTIN ProductGroup ProductName SalesStatus ProductType ZCollection DTBGroup DTBGroupName ProductURL
             )
             WITH it_product_update
             FAILED DATA(failed2)

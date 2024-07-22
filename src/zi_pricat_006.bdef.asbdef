@@ -100,6 +100,8 @@ etag master LocalLastChangedAt
   field ( readonly ) SalesStatus;
   field ( readonly ) ProductType;
   field ( readonly ) ZCollection;
+  field ( readonly ) DTBGroup;
+  field ( readonly ) DTBGroupName;
 
   association _Pricat  { with draft; }
 
@@ -108,7 +110,9 @@ etag master LocalLastChangedAt
 
   side effects
   {
-    field ProductID affects field PricatGroupNumber, field PricatName, field SeriesName, field ArticleName, field BackSize, field CupSize, field Color, field ColorName, field GTIN, field ProductGroup, field ProductName;
+//    field ProductID affects field PricatGroupNumber, field PricatName, field SeriesName, field ArticleName, field BackSize, field CupSize, field Color, field ColorName, field GTIN, field ProductGroup, field ProductName,
+//                            field SalesStatus, field ProductType, field ZCollection, field DTBGroup;
+    field ProductID affects $self;
   }
 
 }

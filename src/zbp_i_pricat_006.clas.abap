@@ -6,14 +6,17 @@ CLASS zbp_i_pricat_006 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_prica
                   VALUE(i_color_code)           TYPE string OPTIONAL
                   VALUE(i_pricat_code)          TYPE string OPTIONAL
                   VALUE(i_series_code)          TYPE string OPTIONAL
+                  VALUE(i_dtbgroup_code)        TYPE string OPTIONAL
         EXPORTING VALUE(o_article_description)  TYPE string
                   VALUE(o_color_description)    TYPE string
                   VALUE(o_pricat_description)   TYPE string
                   VALUE(o_series_description)   TYPE string
+                  VALUE(o_dtbgroup_description) TYPE string
                   VALUE(o_article_code)         TYPE string
                   VALUE(o_color_code)           TYPE string
                   VALUE(o_pricat_code)          TYPE string
-                  VALUE(o_series_code)          TYPE string.
+                  VALUE(o_series_code)          TYPE string
+                  VALUE(o_dtbgroup_code)        TYPE string.
 
     TYPES: BEGIN OF descr_table. " for cashing
         TYPES code(4)          TYPE C.
@@ -23,6 +26,7 @@ CLASS zbp_i_pricat_006 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_prica
     CLASS-DATA it_color     TYPE TABLE OF descr_table. " WITH UNIQUE KEY code.
     CLASS-DATA it_pricat    TYPE TABLE OF descr_table. " WITH UNIQUE KEY code.
     CLASS-DATA it_series    TYPE TABLE OF descr_table. " WITH UNIQUE KEY code.
+    CLASS-DATA it_dtbgroup  TYPE TABLE OF descr_table. " WITH UNIQUE KEY code.
 
 *   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API) - optimized via cash
     CLASS-METHODS get_custom_fields_opt_internal
@@ -30,20 +34,26 @@ CLASS zbp_i_pricat_006 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_prica
                   VALUE(i_color_code)           TYPE string OPTIONAL
                   VALUE(i_pricat_code)          TYPE string OPTIONAL
                   VALUE(i_series_code)          TYPE string OPTIONAL
+                  VALUE(i_dtbgroup_code)        TYPE string OPTIONAL
         EXPORTING VALUE(o_article_description)  TYPE string
                   VALUE(o_color_description)    TYPE string
                   VALUE(o_pricat_description)   TYPE string
                   VALUE(o_series_description)   TYPE string
+                  VALUE(o_dtbgroup_description) TYPE string
                   VALUE(o_article_code)         TYPE string
                   VALUE(o_color_code)           TYPE string
                   VALUE(o_pricat_code)          TYPE string
-                  VALUE(o_series_code)          TYPE string.
+                  VALUE(o_series_code)          TYPE string
+                  VALUE(o_dtbgroup_code)        TYPE string.
 
-ENDCLASS. " zbp_i_pricat_006 DEFINITION
+ENDCLASS.
 
-CLASS zbp_i_pricat_006 IMPLEMENTATION.
 
-  METHOD get_custom_fields_internal. " Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+
+CLASS ZBP_I_PRICAT_006 IMPLEMENTATION.
+
+
+  METHOD get_custom_fields_internal. " Get Description for Article, Color, Pricat, Series, DTB Group (via Custom Business Object ODATA API)
 
     DATA system_url TYPE string.
 
@@ -178,7 +188,8 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
                 '"ARTICLE_CODE":"' i_article_code '",'
                 '"COLOR_CODE":"' i_color_code '",'
                 '"PRICAT_CODE":"' i_pricat_code '",'
-                '"SERIES_CODE":"' i_series_code '"'
+                '"SERIES_CODE":"' i_series_code '",'
+                '"DTB_CODE":"' i_dtbgroup_code '"'
                 '}'
             INTO
                 body.
@@ -235,6 +246,13 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
         o_series_description = s2.
         o_series_code        = i_series_code.
 
+        REPLACE '<d:DTB_DESCRIPTION>'     IN text WITH '***DTB_DESCRIPTION***'.
+        REPLACE '</d:DTB_DESCRIPTION>'    IN text WITH '***DTB_DESCRIPTION***'.
+        SPLIT text AT '***DTB_DESCRIPTION***' INTO s1 s2 s3.
+        o_dtbgroup_description = s2.
+        o_dtbgroup_code        = i_dtbgroup_code.
+
+
     CATCH cx_web_message_error INTO DATA(lx_web_message_error).
       " Handle Exception
 *      RAISE SHORTDUMP lx_web_message_error.
@@ -262,6 +280,7 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
     ENDTRY.
 
   ENDMETHOD. " get_custom_fields_internal
+
 
   METHOD get_custom_fields_opt_internal. " Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API) - optimized
 
@@ -299,6 +318,13 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
             o_series_code          = series-code.
         ENDIF.
     ENDIF.
+    IF ( i_dtbgroup_code IS NOT INITIAL ).
+        READ TABLE it_dtbgroup  INTO DATA(dtbgroup) WITH KEY code = i_dtbgroup_code BINARY SEARCH.
+        IF ( sy-subrc = 0 ).
+            o_dtbgroup_description  = dtbgroup-description.
+            o_dtbgroup_code         = dtbgroup-code.
+        ENDIF.
+    ENDIF.
 
 *   If did not find descriptions in cash
     DATA(article_found) = abap_true.
@@ -317,112 +343,54 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
     IF ( ( i_series_code IS NOT INITIAL ) AND ( o_series_code IS INITIAL ) ).
         series_found = abap_false.
     ENDIF.
+    DATA(dtbgroup_found) = abap_true.
+    IF ( ( i_dtbgroup_code IS NOT INITIAL ) AND ( o_dtbgroup_code IS INITIAL ) ).
+        dtbgroup_found = abap_false.
+    ENDIF.
 *   If did not find descriptions in cash - call API
-    IF ( ( article_found = abap_false ) OR ( color_found = abap_false ) OR ( pricat_found = abap_false ) OR ( series_found = abap_false ) ).
+    IF ( ( article_found = abap_false ) OR ( color_found = abap_false ) OR ( pricat_found = abap_false ) OR ( series_found = abap_false ) OR ( dtbgroup_found = abap_false ) ).
 
         zbp_i_pricat_006=>get_custom_fields_internal(
           EXPORTING
-             i_article_code        = i_article_code " '123'
-             i_color_code          = i_color_code   " '030'
-             i_pricat_code         = i_pricat_code  " '21'
-             i_series_code         = i_series_code  " '126'
+             i_article_code         = i_article_code    " '123'
+             i_color_code           = i_color_code      " '030'
+             i_pricat_code          = i_pricat_code     " '21'
+             i_series_code          = i_series_code     " '126'
+             i_dtbgroup_code        = i_dtbgroup_code   " '114'
           IMPORTING
-             o_article_description = o_article_description
-             o_color_description   = o_color_description
-             o_pricat_description  = o_pricat_description
-             o_series_description  = o_series_description
-             o_article_code        = o_article_code
-             o_color_code          = o_color_code
-             o_pricat_code         = o_pricat_code
-             o_series_code         = o_series_code
+             o_article_description  = o_article_description
+             o_color_description    = o_color_description
+             o_pricat_description   = o_pricat_description
+             o_series_description   = o_series_description
+             o_dtbgroup_description = o_dtbgroup_description
+             o_article_code         = o_article_code
+             o_color_code           = o_color_code
+             o_pricat_code          = o_pricat_code
+             o_series_code          = o_series_code
+             o_dtbgroup_code        = o_dtbgroup_code
         ).
 
     ENDIF.
     IF ( ( article_found = abap_false ) AND ( o_article_code IS NOT INITIAL ) ). " found via API
         APPEND VALUE descr_table( code = o_article_code description = o_article_description ) TO it_article.
         SORT it_article STABLE BY code.
-*        it_cash_create = VALUE #(
-*            (
-*                %cid = 'root'
-*                %data = VALUE #(
-*                    Type        = 'A'
-*                    Code        = o_article_code
-*                    Description = o_article_description
-*                )
-*            )
-*        ).
-*        MODIFY ENTITIES OF zi_cash_006
-*            ENTITY Cash
-*            CREATE FIELDS ( Type Code Description )
-*            WITH it_cash_create
-*            MAPPED DATA(mapped1)
-*            FAILED DATA(failed1)
-*            REPORTED DATA(reported1).
     ENDIF.
     IF ( ( color_found = abap_false ) AND ( o_color_code IS NOT INITIAL ) ). " found via API
         APPEND VALUE descr_table( code = o_color_code description = o_color_description ) TO it_color.
         SORT it_color STABLE BY code.
-*        it_cash_create = VALUE #(
-*            (
-*                %cid = 'root'
-*                %data = VALUE #(
-*                    Type        = 'C'
-*                    Code        = o_color_code
-*                    Description = o_color_description
-*                )
-*            )
-*        ).
-*        MODIFY ENTITIES OF zi_cash_006
-*            ENTITY Cash
-*            CREATE FIELDS ( Type Code Description )
-*            WITH it_cash_create
-*            MAPPED DATA(mapped2)
-*            FAILED DATA(failed2)
-*            REPORTED DATA(reported2).
     ENDIF.
     IF ( ( pricat_found = abap_false ) AND ( o_pricat_code IS NOT INITIAL ) ). " found via API
         APPEND VALUE descr_table( code = o_pricat_code description = o_pricat_description ) TO it_pricat.
         SORT it_pricat STABLE BY code.
-*        it_cash_create = VALUE #(
-*            (
-*                %cid = 'root'
-*                %data = VALUE #(
-*                    Type        = 'P'
-*                    Code        = o_pricat_code
-*                    Description = o_pricat_description
-*                )
-*            )
-*        ).
-*        MODIFY ENTITIES OF zi_cash_006
-*            ENTITY Cash
-*            CREATE FIELDS ( Type Code Description )
-*            WITH it_cash_create
-*            MAPPED DATA(mapped3)
-*            FAILED DATA(failed3)
-*            REPORTED DATA(reported3).
     ENDIF.
     IF ( ( series_found = abap_false ) AND ( o_series_code IS NOT INITIAL ) ). " found via API
         APPEND VALUE descr_table( code = o_series_code description = o_series_description ) TO it_series.
         SORT it_series STABLE BY code.
-*        it_cash_create = VALUE #(
-*            (
-*                %cid = 'root'
-*                %data = VALUE #(
-*                    Type        = 'S'
-*                    Code        = o_series_code
-*                    Description = o_series_description
-*                )
-*            )
-*        ).
-*        MODIFY ENTITIES OF zi_cash_006
-*            ENTITY Cash
-*            CREATE FIELDS ( Type Code Description )
-*            WITH it_cash_create
-*            MAPPED DATA(mapped4)
-*            FAILED DATA(failed4)
-*            REPORTED DATA(reported4).
+    ENDIF.
+    IF ( ( dtbgroup_found = abap_false ) AND ( o_dtbgroup_code IS NOT INITIAL ) ). " found via API
+        APPEND VALUE descr_table( code = o_dtbgroup_code description = o_dtbgroup_description ) TO it_dtbgroup.
+        SORT it_dtbgroup STABLE BY code.
     ENDIF.
 
   ENDMETHOD. " get_custom_fields_opt_internal
-
-ENDCLASS. " zbp_i_pricat_006 IMPLEMENTATION
+ENDCLASS.

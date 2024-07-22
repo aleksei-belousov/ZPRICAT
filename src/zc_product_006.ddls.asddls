@@ -31,6 +31,8 @@ define view entity ZC_PRODUCT_006 as projection on ZI_PRODUCT_006
     ProductTypeName,
     ZCollection,
     ZCollectionName,
+    DTBGroup,
+    DTBGroupName,
 
     ProductURL,
 

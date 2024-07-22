@@ -126,6 +126,16 @@ annotate entity ZC_PRODUCT_006 with
     @UI.hidden: true
     ZCollectionName;
 
+    @UI: {  lineItem:       [ { position: 210, label: 'DTB Group', cssDefault.width: '100px' } ],
+            identification: [ { position: 210, label: 'DTB Group' } ] }
+    //@UI.hidden: true
+    DTBGroup;
+
+    @UI: {  lineItem:       [ { position: 220, label: 'DTB Group Name', cssDefault.width: '100px' } ],
+            identification: [ { position: 220, label: 'DTB Group Name' } ] }
+    //@UI.hidden: true
+    DTBGroupName;
+
     @UI.hidden: true
     ProductURL;
 

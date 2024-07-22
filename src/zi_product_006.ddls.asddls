@@ -27,6 +27,8 @@ association to parent ZI_PRICAT_006 as _Pricat on $projection.PricatUUID = _Pric
     producttypename as ProductTypeName,
     zcollection as ZCollection,
     zcollectionname as ZCollectionName,
+    dtbgroup as DTBGroup,
+    dtbgroupname as DTBGroupName,
 
     producturl as ProductURL,
 
