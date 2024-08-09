@@ -71,13 +71,13 @@ annotate entity ZC_PRICAT_006 with
     @UI.hidden: true
     PricatUUID;
 
-    @UI: {  lineItem:       [ { position: 10, label: 'Price Catalog ID', cssDefault.width: '200px' } ],
-            identification: [ { position: 10, label: 'Price Catalog ID', qualifier: 'Fields'  }, 
+    @UI: {  lineItem:       [ { position: 10, label: 'ID', cssDefault.width: '200px' } ],
+            identification: [ { position: 10, label: 'ID', qualifier: 'Fields'  }, 
                               { type: #FOR_ACTION, dataAction: 'release',                       label: 'Release',                       position: 1 },
                               { type: #FOR_ACTION, dataAction: 'add_pricat_customers',          label: 'Add Pricat Customers',          position: 2 },
                               { type: #FOR_ACTION, dataAction: 'add_promotion_customers',       label: 'Add Promotion Customers',       position: 3 },
                               { type: #FOR_ACTION, dataAction: 'add_products_based_on_filters', label: 'Add Products Based On Filters', position: 4 } ],
-            fieldGroup:     [ { position: 10, label: 'Price Catalog ID', qualifier: 'Fields' } ] }
+            fieldGroup:     [ { position: 10, label: 'ID', qualifier: 'Fields' } ] }
     //@UI.hidden: true
     PricatID;
 
@@ -147,7 +147,7 @@ annotate entity ZC_PRICAT_006 with
     @UI: {  lineItem:       [ { position: 120, label: 'Row Limit', cssDefault.width: '200px' } ],
             identification: [ { position: 120, label: 'Row Limit', qualifier: 'Filters' } ],
             fieldGroup:     [ { position: 120, label: 'Row Limit', qualifier: 'Filters' } ] }
-    //@UI.hidden: true
+    @UI.hidden: true
     RowLimit;
 
     /* Administrative data */

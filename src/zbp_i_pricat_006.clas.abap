@@ -1,6 +1,6 @@
 CLASS zbp_i_pricat_006 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_pricat_006.
 
-*   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
+*   Get Description for Article, Color, Pricat, Series, DTB Group (via Custom Business Object ODATA API)
     CLASS-METHODS get_custom_fields_internal
         IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
                   VALUE(i_color_code)           TYPE string OPTIONAL
@@ -28,7 +28,7 @@ CLASS zbp_i_pricat_006 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_prica
     CLASS-DATA it_series    TYPE TABLE OF descr_table. " WITH UNIQUE KEY code.
     CLASS-DATA it_dtbgroup  TYPE TABLE OF descr_table. " WITH UNIQUE KEY code.
 
-*   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API) - optimized via cash
+*   Get Description for Article, Color, Pricat, Series, DTB Group (via Custom Business Object ODATA API) - optimized via cash
     CLASS-METHODS get_custom_fields_opt_internal
         IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
                   VALUE(i_color_code)           TYPE string OPTIONAL
@@ -46,12 +46,16 @@ CLASS zbp_i_pricat_006 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_prica
                   VALUE(o_series_code)          TYPE string
                   VALUE(o_dtbgroup_code)        TYPE string.
 
-ENDCLASS.
+    CLASS-DATA skip_rows_filling TYPE C. " Skip product rows filling
 
+*   Enrich Product Row With Product Data
+    CLASS-METHODS enrich_product_row_internal
+        IMPORTING VALUE(i_product)  TYPE i_product
+        EXPORTING VALUE(o_product)  TYPE zc_product_006.
 
+ENDCLASS. " zbp_i_pricat_006 DEFINITION
 
-CLASS ZBP_I_PRICAT_006 IMPLEMENTATION.
-
+CLASS zbp_i_pricat_006 IMPLEMENTATION.
 
   METHOD get_custom_fields_internal. " Get Description for Article, Color, Pricat, Series, DTB Group (via Custom Business Object ODATA API)
 
@@ -281,8 +285,24 @@ CLASS ZBP_I_PRICAT_006 IMPLEMENTATION.
 
   ENDMETHOD. " get_custom_fields_internal
 
+  METHOD get_custom_fields_opt_internal. " Get Description for Article, Color, Pricat, Series, DTB Group (via Custom Business Object ODATA API) - optimized
 
-  METHOD get_custom_fields_opt_internal. " Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API) - optimized
+*   potrebujem v PRICAT aby ste:
+*   vymazali API call na custom fields cize desciption netreba
+*   vymazali fieldy vsetky desciption aby neboli na screene
+*   vymazali ten field na splittovanie "Row limit"
+*   v Release XML aby ste pridali SERIES_CODE a vsetky desciption vymazali
+    o_article_description   = ''.
+    o_article_code          = i_article_code.
+    o_color_description     = ''.
+    o_color_code            = i_color_code.
+    o_pricat_description    = ''.
+    o_pricat_code           = i_pricat_code.
+    o_series_description    = ''.
+    o_series_code           = i_series_code.
+    o_dtbgroup_description  = ''.
+    o_dtbgroup_code         = i_dtbgroup_code.
+    RETURN.
 
 *   DATA it_cash_create TYPE TABLE FOR CREATE zi_cash_006. " Cash
 
@@ -393,4 +413,112 @@ CLASS ZBP_I_PRICAT_006 IMPLEMENTATION.
     ENDIF.
 
   ENDMETHOD. " get_custom_fields_opt_internal
-ENDCLASS.
+
+  METHOD enrich_product_row_internal. " Enrich Product Row With Product Data
+
+        IF ( i_product-Product IS INITIAL ).
+            RETURN.
+        ENDIF.
+
+*        Get Custom Fields (works in On Product Modify Event only)
+*        DATA(i_article_code)    = CONV string( i_product-YY1_SeriesArticleGroup_PRD ).    " '123'
+*        DATA(i_color_code)      = CONV string( i_product-YY1_Color_PRD ).                 " '030'
+*        DATA(i_pricat_code)     = CONV string( i_product-YY1_PRICATGroup_PRD ).           " '21'
+*        DATA(i_series_code)     = CONV string( i_product-YY1_SeriesName_PRD ).            " '126'
+*        DATA(i_dtbgroup_code)   = CONV string( i_product-YY1_DTBGroup_PRD ).              " '114'
+*        zbp_i_pricat_006=>get_custom_fields_opt_internal(
+*          EXPORTING
+*             i_article_code         = i_article_code
+*             i_color_code           = i_color_code
+*             i_pricat_code          = i_pricat_code
+*             i_series_code          = i_series_code
+*             i_dtbgroup_code        = i_dtbgroup_code
+*          IMPORTING
+*             o_article_description  = DATA(article_description)
+*             o_color_description    = DATA(color_description)
+*             o_pricat_description   = DATA(pricat_description)
+*             o_series_description   = DATA(series_description)
+*             o_dtbgroup_description = DATA(dtbgroup_description)
+*             o_article_code         = DATA(article_code)
+*             o_color_code           = DATA(color_code)
+*             o_pricat_code          = DATA(pricat_code)
+*             o_series_code          = DATA(series_code)
+*             o_dtbgroup_code        = DATA(dtbgroup_code)
+*        ).
+
+*       Sales Price - AAA: Sales Price - ???
+        DATA(salesPrice)    = 0.
+
+*       Retail Price - AAE: Retail Price - ??? (maybe A_ProductValuation/to_ValuationCosting as StandardPrice) manage priceS - sales ZRRP + ZRR2 = 9 (1010)
+        DATA(retailPrice)   = 0.
+
+*       Product ID
+        o_product-ProductID          = i_product-Product.
+
+*       Article - YY1_SeriesArticleGroup_PRD
+        o_product-Article            = i_product-YY1_SeriesArticleGroup_PRD.
+
+*       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
+*        o_product-ArticleName        = article_description.
+
+*       Pricat Group Number - PRICAT Group Number - ??? YY1_PRICATGroupNo_PRD (fixed to YY1_PRICATGroup_PRD)
+        o_product-PricatGroupNumber  = i_product-YY1_PRICATGroup_PRD.
+
+*       Pricat Name - PRICAT Name - YY1_PRICATGroupNo_PRDT (fixed to YY1_PRICATGroup_PRDT)
+*        o_product-PricatName         = pricat_description.
+
+*       Series - YY1_SeriesName_PRD
+        o_product-Series             = i_product-YY1_SeriesName_PRD.
+
+*       Series Name - Series Name - YY1_SeriesName_PRDT
+*        <entity>-SeriesName         = series_description.
+
+        SPLIT i_product-Product AT '-' INTO DATA(s1) DATA(s2) DATA(s3) DATA(s4).
+
+*       BackSize - Size - ??? in A_Product as YY1_SizeFR_PRD, YY1_SizeUS_PRD, YY1_SizeGB_PRD, Product (substring - 4th)
+        o_product-BackSize           = s4.
+
+*       CupSize - Cup - ??? in A_Product as Product (substring - 3rd)
+        o_product-CupSize            = s3.
+
+*       Color - YY1_Color_PRD
+        o_product-Color              = i_product-YY1_Color_PRD.
+
+*       ColorName - Color name - YY1_Color_PRDT
+*        <entity>-ColorName          = color_description.
+
+*       GTIN - GTIN - in A_Product as ProductStandardID
+        o_product-GTIN               = i_product-ProductStandardID.
+
+*       ProductGroup - MateialGroup (example: Z00001318)
+        o_product-ProductGroup       = i_product-ProductGroup.
+
+*       ProductName - Product Desciption ('EN')
+        SELECT SINGLE * FROM I_ProductDescription WHERE ( Product = @i_product-Product ) AND ( Language = 'E' ) INTO @DATA(productDescription).
+        IF ( sy-subrc = 0 ).
+            o_product-ProductName = productDescription-ProductDescription.
+        ELSE.
+            o_product-ProductName = ''.
+        ENDIF.
+
+*       SalesStatus (Cross-Distribution Chain Product Status)
+        o_product-SalesStatus    = i_product-SalesStatus.
+
+*       ProductType
+        o_product-ProductType    = i_product-ProductType.
+
+*       ZCollection
+        o_product-ZCollection    = i_product-YY1_Collection_PRD.
+
+*       DTB Group
+        o_product-DTBGroup       = i_product-YY1_DTBGroup_PRD.
+
+*       DTB Group Name
+*        o_product-DTBGroupName   = dtbgroup_description.
+
+*       ProductURL (link to Product)
+        o_product-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && i_product-Product && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
+
+  ENDMETHOD. " enrich_product_row_internal
+
+ENDCLASS. " zbp_i_pricat_006 IMPLEMENTATION

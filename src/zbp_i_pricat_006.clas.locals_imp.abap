@@ -4,32 +4,15 @@ CLASS lhc_product DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS on_product_modify FOR DETERMINE ON MODIFY IMPORTING keys FOR Product~on_product_modify.
 
-******** Internal Methods *********
-
-**   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-*    METHODS get_custom_fields_internal
-*        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
-*                  VALUE(i_color_code)           TYPE string OPTIONAL
-*                  VALUE(i_pricat_code)          TYPE string OPTIONAL
-*                  VALUE(i_series_code)          TYPE string OPTIONAL
-*        EXPORTING VALUE(o_article_description)  TYPE string
-*                  VALUE(o_color_description)    TYPE string
-*                  VALUE(o_pricat_description)   TYPE string
-*                  VALUE(o_series_description)   TYPE string
-*                  VALUE(o_article_code)         TYPE string
-*                  VALUE(o_color_code)           TYPE string
-*                  VALUE(o_pricat_code)          TYPE string
-*                  VALUE(o_series_code)          TYPE string.
-
 ENDCLASS. " lhc_product DEFINITION
 
 CLASS lhc_product IMPLEMENTATION.
 
   METHOD on_product_modify.
 
-*    IF ( zbp_i_pricat_006=>on_product_modify_disable = abap_true ).
-*        RETURN.
-*    ENDIF.
+    IF ( zbp_i_pricat_006=>skip_rows_filling = 'X' ).
+        RETURN.
+    ENDIF.
 
     DATA it_product_update TYPE TABLE FOR UPDATE zi_pricat_006\\Product. " Product (item)
 
@@ -78,26 +61,26 @@ CLASS lhc_product IMPLEMENTATION.
             DATA(i_series_code)     = CONV string( product-YY1_SeriesName_PRD ).            " '126'
             DATA(i_dtbgroup_code)   = CONV string( product-YY1_DTBGroup_PRD ).              " '114'
 
-*            get_custom_fields_internal(
-            zbp_i_pricat_006=>get_custom_fields_opt_internal(
-              EXPORTING
-                 i_article_code         = i_article_code
-                 i_color_code           = i_color_code
-                 i_pricat_code          = i_pricat_code
-                 i_series_code          = i_series_code
-                 i_dtbgroup_code        = i_dtbgroup_code
-              IMPORTING
-                 o_article_description  = DATA(article_description)
-                 o_color_description    = DATA(color_description)
-                 o_pricat_description   = DATA(pricat_description)
-                 o_series_description   = DATA(series_description)
-                 o_dtbgroup_description = DATA(dtbgroup_description)
-                 o_article_code         = DATA(article_code)
-                 o_color_code           = DATA(color_code)
-                 o_pricat_code          = DATA(pricat_code)
-                 o_series_code          = DATA(series_code)
-                 o_dtbgroup_code        = DATA(dtbgroup_code)
-            ).
+**           get_custom_fields_internal(
+*            zbp_i_pricat_006=>get_custom_fields_opt_internal(
+*              EXPORTING
+*                 i_article_code         = i_article_code
+*                 i_color_code           = i_color_code
+*                 i_pricat_code          = i_pricat_code
+*                 i_series_code          = i_series_code
+*                 i_dtbgroup_code        = i_dtbgroup_code
+*              IMPORTING
+*                 o_article_description  = DATA(article_description)
+*                 o_color_description    = DATA(color_description)
+*                 o_pricat_description   = DATA(pricat_description)
+*                 o_series_description   = DATA(series_description)
+*                 o_dtbgroup_description = DATA(dtbgroup_description)
+*                 o_article_code         = DATA(article_code)
+*                 o_color_code           = DATA(color_code)
+*                 o_pricat_code          = DATA(pricat_code)
+*                 o_series_code          = DATA(series_code)
+*                 o_dtbgroup_code        = DATA(dtbgroup_code)
+*            ).
 
         ENDIF.
 
@@ -111,19 +94,19 @@ CLASS lhc_product IMPLEMENTATION.
         <entity>-Article            = i_article_code.
 
 *       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
-        <entity>-ArticleName        = article_description.
+*        <entity>-ArticleName        = article_description.
 
 *       Pricat Group Number - PRICAT Group Number - ??? YY1_PRICATGroupNo_PRD (fixed to YY1_PRICATGroup_PRD)
         <entity>-PricatGroupNumber  = product-YY1_PRICATGroup_PRD.
 
 *       Pricat Name - PRICAT Name - YY1_PRICATGroupNo_PRDT (fixed to YY1_PRICATGroup_PRDT)
-        <entity>-PricatName         = pricat_description.
+*        <entity>-PricatName         = pricat_description.
 
 *       Series - Series - YY1_SeriesName_PRDT
         <entity>-Series             = i_series_code.
 
 *       Series Name - Series Name - YY1_SeriesName_PRDT
-        <entity>-SeriesName         = series_description.
+*        <entity>-SeriesName         = series_description.
 
         SPLIT product-Product AT '-' INTO DATA(s1) DATA(s2) DATA(s3) DATA(s4).
 
@@ -137,7 +120,7 @@ CLASS lhc_product IMPLEMENTATION.
         <entity>-Color              = product-YY1_Color_PRD.
 
 *       ColorName - Color name - YY1_Color_PRDT
-        <entity>-ColorName          = color_description.
+*        <entity>-ColorName          = color_description.
 
 *       GTIN - GTIN - in A_Product as ProductStandardID
         <entity>-GTIN               = product-ProductStandardID.
@@ -166,7 +149,7 @@ CLASS lhc_product IMPLEMENTATION.
         <entity>-DTBGroup       = product-YY1_DTBGroup_PRD.
 
 *       DTB Group Name
-        <entity>-DTBGroupName   = dtbgroup_description.
+*        <entity>-DTBGroupName   = dtbgroup_description.
 
 *       ProductURL (link to Product)
         IF ( <entity>-ProductID IS NOT INITIAL ).
@@ -178,13 +161,13 @@ CLASS lhc_product IMPLEMENTATION.
         APPEND VALUE #(
             %tky        = <entity>-%tky
             PricatGroupNumber   = <entity>-PricatGroupNumber
-            PricatName          = <entity>-PricatName
+*            PricatName          = <entity>-PricatName
             Series              = <entity>-Series
-            SeriesName          = <entity>-SeriesName
+*            SeriesName          = <entity>-SeriesName
             Article             = <entity>-Article
-            ArticleName         = <entity>-ArticleName
+*            ArticleName         = <entity>-ArticleName
             Color               = <entity>-Color
-            ColorName           = <entity>-ColorName
+*            ColorName           = <entity>-ColorName
             BackSize            = <entity>-BackSize
             CupSize             = <entity>-CupSize
             GTIN                = <entity>-GTIN
@@ -194,7 +177,7 @@ CLASS lhc_product IMPLEMENTATION.
             ProductType         = <entity>-ProductType
             ZCollection         = <entity>-ZCollection
             DTBGroup            = <entity>-DTBGroup
-            DTBGroupName        = <entity>-DTBGroupName
+*            DTBGroupName        = <entity>-DTBGroupName
             ProductURL          = <entity>-ProductURL
          )
          TO it_product_update.
@@ -202,7 +185,25 @@ CLASS lhc_product IMPLEMENTATION.
         MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
             ENTITY Product
             UPDATE FIELDS (
-                PricatGroupNumber PricatName Series SeriesName Article ArticleName Color ColorName BackSize CupSize GTIN ProductGroup ProductName SalesStatus ProductType ZCollection DTBGroup DTBGroupName ProductURL
+                PricatGroupNumber
+*                PricatName
+                Series
+*                SeriesName
+                Article
+*                ArticleName
+                Color
+*                ColorName
+                BackSize
+                CupSize
+                GTIN
+                ProductGroup
+                ProductName
+                SalesStatus
+                ProductType
+                ZCollection
+                DTBGroup
+*                DTBGroupName
+                ProductURL
             )
             WITH it_product_update
             FAILED DATA(failed2)
@@ -212,227 +213,6 @@ CLASS lhc_product IMPLEMENTATION.
     ENDLOOP.
 
   ENDMETHOD. " on_product_modify
-
-**   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-*  METHOD get_custom_fields_internal.
-*
-*    DATA system_url TYPE string.
-*
-*    DATA i_username TYPE string VALUE 'INBOUND_USER'.
-*    DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-*
-*    DATA token      TYPE string.
-*    DATA body       TYPE string.
-*    DATA text       TYPE string.
-*    DATA s1         TYPE string.
-*    DATA s2         TYPE string.
-*    DATA s3         TYPE string.
-*
-*    TRY.
-*
-**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS(guid'91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc')'.
-**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'.
-*
-*        system_url = cl_abap_context_info=>get_system_url( ).
-*
-*
-**       Read list of objects and get UUID of the first one:
-*
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-*            INTO DATA(i_url).
-*
-*        IF ( system_url(8) = 'my404907' ). " test
-*            i_username  = 'INBOUND_USER'.
-*            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-*        ENDIF.
-*        IF ( system_url(8) = 'my410080' ). " prod
-*            i_username  = 'INBOUND_USER'.
-*            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
-*        ENDIF.
-*
-*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*            i_password = i_password
-*        ).
-*
-*        DATA(lo_http_request) = lo_http_client->get_http_request( ).
-*
-*        DATA(lo_http_response) = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        text                          = lo_http_response->get_text( ).
-*        DATA(status)                  = lo_http_response->get_status( ).
-*        DATA(response_header_fields)  = lo_http_response->get_header_fields( ).
-*
-*        REPLACE '<d:SAP_UUID>'    IN text WITH '***SAP_UUID***'.
-*        REPLACE '</d:SAP_UUID>'   IN text WITH '***SAP_UUID***'.
-*        SPLIT text AT '***SAP_UUID***' INTO s1 s2 s3.
-*
-*        DATA(sap_uuid) = s2.
-*
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-*                '(guid''' sap_uuid ''')' " '(guid''91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc'')'
-*            INTO i_url.
-*
-*        http_destination = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        lo_http_client = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*            i_password = i_password
-*        ).
-*
-*        lo_http_request = lo_http_client->get_http_request( ).
-*
-*
-**       Get Token:
-*
-*        lo_http_request->set_header_field(
-*            i_name  = 'x-csrf-token'
-*            i_value = 'fetch'
-*        ).
-*
-*        lo_http_response = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        text                   = lo_http_response->get_text( ).
-*        status                 = lo_http_response->get_status( ).
-*        response_header_fields = lo_http_response->get_header_fields( ).
-*
-*        READ TABLE response_header_fields WITH KEY name = 'x-csrf-token' INTO DATA(field).
-*        IF ( sy-subrc = 0 ).
-*            token = field-value.
-*        ENDIF.
-*
-*
-**       Update Codes:
-*
-*        DATA i_fields TYPE if_web_http_request=>name_value_pairs.
-*        APPEND VALUE #(
-*            name  = 'x-csrf-token'
-*            value = token " '5iGZK1qT45Vi4UfHYazbPQ=='
-*        )
-*        TO i_fields.
-*        APPEND VALUE #(
-*            name  = 'Content-Type'
-*            value = 'application/json'
-*        )
-*        TO i_fields.
-**        APPEND VALUE #(
-**            name  = 'Content-Length'
-**            value = '1000'
-**        )
-**        TO i_fields.
-*
-*        lo_http_request->set_header_fields(
-*          EXPORTING
-*            i_fields = i_fields
-**          RECEIVING
-**            r_value  =
-*        ).
-*
-*        CONCATENATE
-*                '{'
-*                '"ARTICLE_CODE":"' i_article_code '",'
-*                '"COLOR_CODE":"' i_color_code '",'
-*                '"PRICAT_CODE":"' i_pricat_code '",'
-*                '"SERIES_CODE":"' i_series_code '"'
-*                '}'
-*            INTO
-*                body.
-*
-*        lo_http_request->set_text(
-*          EXPORTING
-*            i_text   = body
-**            i_offset = 0
-**            i_length = -1
-**          RECEIVING
-**            r_value  =
-*        ).
-*
-*        lo_http_response = lo_http_client->execute(
-*            i_method   = if_web_http_client=>put
-*        ).
-*
-*        text                      = lo_http_response->get_text( ).
-*        status                    = lo_http_response->get_status( ).
-*        response_header_fields    = lo_http_response->get_header_fields( ).
-*
-*
-**       Read Descriptions
-*
-*        lo_http_response = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        text                    = lo_http_response->get_text( ).
-*        status                  = lo_http_response->get_status( ).
-*        response_header_fields  = lo_http_response->get_header_fields( ).
-*
-*        REPLACE '<d:ARTICLE_DESCRIPTION>'   IN text WITH '***ARTICLE_DESCRIPTION***'.
-*        REPLACE '</d:ARTICLE_DESCRIPTION>'  IN text WITH '***ARTICLE_DESCRIPTION***'.
-*        SPLIT text AT '***ARTICLE_DESCRIPTION***' INTO s1 s2 s3.
-*        o_article_description = s2.
-*        o_article_code        = i_article_code.
-*
-*        REPLACE '<d:COLOR_DESCRIPTION>'     IN text WITH '***COLOR_DESCRIPTION***'.
-*        REPLACE '</d:COLOR_DESCRIPTION>'    IN text WITH '***COLOR_DESCRIPTION***'.
-*        SPLIT text AT '***COLOR_DESCRIPTION***' INTO s1 s2 s3.
-*        o_color_description = s2.
-*        o_color_code        = i_color_code.
-*
-*        REPLACE '<d:PRICAT_DESCRIPTION>'     IN text WITH '***PRICAT_DESCRIPTION***'.
-*        REPLACE '</d:PRICAT_DESCRIPTION>'    IN text WITH '***PRICAT_DESCRIPTION***'.
-*        SPLIT text AT '***PRICAT_DESCRIPTION***' INTO s1 s2 s3.
-*        o_pricat_description = s2.
-*        o_pricat_code        = i_pricat_code.
-*
-*        REPLACE '<d:SERIES_DESCRIPTION>'     IN text WITH '***SERIES_DESCRIPTION***'.
-*        REPLACE '</d:SERIES_DESCRIPTION>'    IN text WITH '***SERIES_DESCRIPTION***'.
-*        SPLIT text AT '***SERIES_DESCRIPTION***' INTO s1 s2 s3.
-*        o_series_description = s2.
-*        o_series_code        = i_series_code.
-*
-*    CATCH cx_web_message_error INTO DATA(lx_web_message_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_message_error.
-*
-*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_abap_context_info_error.
-*
-*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_remote.
-*
-*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_gateway.
-*
-*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_http_client_error.
-*
-*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-*        "handle exception
-**      RAISE SHORTDUMP lx_http_dest_provider_error.
-*
-*    ENDTRY.
-*
-*  ENDMETHOD. " get_custom_fields_internal
 
 ENDCLASS. " lhc_product IMPLEMENTATION
 
@@ -585,26 +365,7 @@ CLASS lhc_pricat DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS add_promotion_customers FOR MODIFY IMPORTING keys FOR ACTION Pricat~add_promotion_customers.
 
-    METHODS add_all_series FOR MODIFY IMPORTING keys FOR ACTION Pricat~add_all_series.
-
     METHODS add_products_based_on_filters FOR MODIFY IMPORTING keys FOR ACTION Pricat~add_products_based_on_filters.
-
-******** Internal Methods *********
-
-**   Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-*    METHODS get_custom_fields_internal
-*        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
-*                  VALUE(i_color_code)           TYPE string OPTIONAL
-*                  VALUE(i_pricat_code)          TYPE string OPTIONAL
-*                  VALUE(i_series_code)          TYPE string OPTIONAL
-*        EXPORTING VALUE(o_article_description)  TYPE string
-*                  VALUE(o_color_description)    TYPE string
-*                  VALUE(o_pricat_description)   TYPE string
-*                  VALUE(o_series_description)   TYPE string
-*                  VALUE(o_article_code)         TYPE string
-*                  VALUE(o_color_code)           TYPE string
-*                  VALUE(o_pricat_code)          TYPE string
-*                  VALUE(o_series_code)          TYPE string.
 
 ENDCLASS. " lhc_pricat DEFINITION
 
@@ -747,16 +508,17 @@ CLASS lhc_pricat IMPLEMENTATION.
                 request_body = request_body && '<Product>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ProductID>' && productID && '</ProductID>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<PricatGroupNumber>' && product-PricatGroupNumber && '</PricatGroupNumber>' && cl_abap_char_utilities=>cr_lf.
-                request_body = request_body && '<PricatName>' && product-PricatName && '</PricatName>' && cl_abap_char_utilities=>cr_lf.
-                request_body = request_body && '<SeriesName>' && product-SeriesName && '</SeriesName>' && cl_abap_char_utilities=>cr_lf.
-                request_body = request_body && '<ArticleName>' && product-ArticleName && '</ArticleName>' && cl_abap_char_utilities=>cr_lf.
+*                request_body = request_body && '<PricatName>' && product-PricatName && '</PricatName>' && cl_abap_char_utilities=>cr_lf.
+*                request_body = request_body && '<SeriesName>' && product-SeriesName && '</SeriesName>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<SeriesCode>' && product-Series && '</SeriesCode>' && cl_abap_char_utilities=>cr_lf.
+*                request_body = request_body && '<ArticleName>' && product-ArticleName && '</ArticleName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<Color>' && product-Color && '</Color>' && cl_abap_char_utilities=>cr_lf.
-                request_body = request_body && '<ColorName>' && product-ColorName && '</ColorName>' && cl_abap_char_utilities=>cr_lf.
+*                request_body = request_body && '<ColorName>' && product-ColorName && '</ColorName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<GTIN>' && product-GTIN && '</GTIN>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<MaterialGroup>' && product-ProductGroup && '</MaterialGroup>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ProductDescription>' && product-ProductName && '</ProductDescription>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<DTBGroup>' && product-DTBGroup && '</DTBGroup>' && cl_abap_char_utilities=>cr_lf.
-                request_body = request_body && '<DTBGroupName>' && product-DTBGroupName && '</DTBGroupName>' && cl_abap_char_utilities=>cr_lf.
+*                request_body = request_body && '<DTBGroupName>' && product-DTBGroupName && '</DTBGroupName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '</Product>' && cl_abap_char_utilities=>cr_lf.
             ENDLOOP.
 
@@ -1021,10 +783,6 @@ CLASS lhc_pricat IMPLEMENTATION.
 
   ENDMETHOD. " add_promotion_customers
 
-  METHOD add_all_series. " Add All Series
-
-  ENDMETHOD. " add_all_series
-
   METHOD add_products_based_on_filters. " Add Product Based On Filters
 
     DATA it_product_create  TYPE TABLE FOR CREATE zi_pricat_006\_Product. " Product (item)
@@ -1107,7 +865,6 @@ CLASS lhc_pricat IMPLEMENTATION.
             TO r_salesstatus.
         ENDLOOP.
 
-*        SELECT * FROM I_ProductTP_2 WHERE ( Product LIKE @regexp ) INTO TABLE @DATA(it_product).
         SELECT
                 *
             FROM
@@ -1148,16 +905,45 @@ CLASS lhc_pricat IMPLEMENTATION.
         ENDLOOP.
         DELETE it_product WHERE ( Product iS INITIAL ).
 
-*       Add rest Products into Items
+*       Add rest Products into Product Rows
         LOOP AT it_product INTO DATA(wa_product).
+
             DATA(tabix) = sy-tabix.
             DATA(cid)   = sy-tabix.
+
+*           Convert Product ID into Product Row
+            zbp_i_pricat_006=>enrich_product_row_internal(
+              EXPORTING
+                i_product = wa_product
+              IMPORTING
+                o_product = DATA(o_product)
+             ).
+
             APPEND VALUE #(
                 %tky  = <entity>-%tky
                 %target = VALUE #( (
-                    %is_draft   = <entity>-%is_draft
-                    %cid        = cid
-                    ProductID   = wa_product-Product
+                    %is_draft           = <entity>-%is_draft
+                    %cid                = cid
+                    ProductID           = wa_product-Product
+                    PricatGroupNumber   = o_product-PricatGroupNumber
+*                    PricatName          = o_product-PricatName
+                    Series              = o_product-Series
+*                    SeriesName          = o_product-SeriesName
+                    Article             = o_product-Article
+*                    ArticleName         = o_product-ArticleName
+                    Color               = o_product-Color
+*                    ColorName           = o_product-ColorName
+                    BackSize            = o_product-BackSize
+                    CupSize             = o_product-CupSize
+                    GTIN                = o_product-GTIN
+                    ProductGroup        = o_product-ProductGroup
+                    ProductName         = o_product-ProductName
+                    SalesStatus         = o_product-SalesStatus
+                    ProductType         = o_product-ProductType
+                    ZCollection         = o_product-ZCollection
+                    DTBGroup            = o_product-DTBGroup
+*                    DTBGroupName        = o_product-DTBGroupName
+                    ProductURL          = o_product-ProductURL
                 ) )
             ) TO it_product_create.
 
@@ -1174,240 +960,53 @@ CLASS lhc_pricat IMPLEMENTATION.
 
         ENDLOOP.
 
-*       Create Product (item)
+**       Create Product (rows)
+*        MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
+*            ENTITY Pricat
+*            CREATE BY \_Product
+*            FIELDS ( ProductID )
+*            WITH it_product_create
+*            MAPPED DATA(mapped2)
+*            FAILED DATA(failed2)
+*            REPORTED DATA(reported2).
+
+        zbp_i_pricat_006=>skip_rows_filling = abap_true. " 'X'.
+
         MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
             ENTITY Pricat
             CREATE BY \_Product
-            FIELDS ( ProductID )
+            FIELDS (
+                ProductID
+                PricatGroupNumber
+*                PricatName
+                Series
+*                SeriesName
+                Article
+*                ArticleName
+                Color
+*                ColorName
+                BackSize
+                CupSize
+                GTIN
+                ProductGroup
+                ProductName
+                SalesStatus
+                ProductType
+                ZCollection
+                DTBGroup
+*                DTBGroupName
+                ProductURL
+            )
             WITH it_product_create
-            MAPPED DATA(mapped2)
             FAILED DATA(failed2)
+            MAPPED DATA(mapped2)
             REPORTED DATA(reported2).
+
+        zbp_i_pricat_006=>skip_rows_filling = abap_false. " ' '.
 
     ENDLOOP.
 
   ENDMETHOD. " add_products_based_on_filters
-
-** Get Description for Article, Color, Pricat, Series (via Custom Business Object ODATA API)
-*  METHOD get_custom_fields_internal.
-*
-*    DATA system_url TYPE string.
-*
-*    DATA i_username TYPE string VALUE 'INBOUND_USER'.
-*    DATA i_password TYPE string VALUE 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-*
-*    DATA token      TYPE string.
-*    DATA body       TYPE string.
-*    DATA text       TYPE string.
-*    DATA s1         TYPE string.
-*    DATA s2         TYPE string.
-*    DATA s3         TYPE string.
-*
-*    TRY.
-*
-**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS(guid'91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc')'.
-**  DATA(i_url) = 'https://my404898.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'.
-*
-*        system_url = cl_abap_context_info=>get_system_url( ).
-*
-*
-**       Read list of objects and get UUID of the first one:
-*
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-*            INTO DATA(i_url).
-*
-*        IF ( system_url(8) = 'my404907' ). " test
-*            i_username  = 'INBOUND_USER'.
-*            i_password  = 'rtrVDDgelabtTjUiybRX}tVD3JksqqfvPpBdJRaL'.
-*        ENDIF.
-*        IF ( system_url(8) = 'my410080' ). " prod
-*            i_username  = 'INBOUND_USER'.
-*            i_password  = 'YKXMYdjNnGgqko&aEueVx5mHTFPRGcDGAVgQgnFh'.
-*        ENDIF.
-*
-*        DATA(http_destination) = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*            i_password = i_password
-*        ).
-*
-*        DATA(lo_http_request) = lo_http_client->get_http_request( ).
-*
-*        DATA(lo_http_response) = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        text                          = lo_http_response->get_text( ).
-*        DATA(status)                  = lo_http_response->get_status( ).
-*        DATA(response_header_fields)  = lo_http_response->get_header_fields( ).
-*
-*        REPLACE '<d:SAP_UUID>'    IN text WITH '***SAP_UUID***'.
-*        REPLACE '</d:SAP_UUID>'   IN text WITH '***SAP_UUID***'.
-*        SPLIT text AT '***SAP_UUID***' INTO s1 s2 s3.
-*
-*        DATA(sap_uuid) = s2.
-*
-*        CONCATENATE
-*                'https://'
-*                system_url(8) " my404898
-*                '-api.s4hana.cloud.sap/sap/opu/odata/sap/YY1_CUSTOMFIELDS_CDS/YY1_CUSTOMFIELDS'
-*                '(guid''' sap_uuid ''')' " '(guid''91bf6b38-1c0f-1ede-b2ca-79c4ed0310fc'')'
-*            INTO i_url.
-*
-*        http_destination = cl_http_destination_provider=>create_by_url( i_url = i_url ).
-*
-*        lo_http_client = cl_web_http_client_manager=>create_by_http_destination( http_destination ).
-*
-*        lo_http_client->get_http_request( )->set_authorization_basic(
-*            i_username = i_username
-*            i_password = i_password
-*        ).
-*
-*        lo_http_request = lo_http_client->get_http_request( ).
-*
-*
-**       Get Token:
-*
-*        lo_http_request->set_header_field(
-*            i_name  = 'x-csrf-token'
-*            i_value = 'fetch'
-*        ).
-*
-*        lo_http_response = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        text                   = lo_http_response->get_text( ).
-*        status                 = lo_http_response->get_status( ).
-*        response_header_fields = lo_http_response->get_header_fields( ).
-*
-*        READ TABLE response_header_fields WITH KEY name = 'x-csrf-token' INTO DATA(field).
-*        IF ( sy-subrc = 0 ).
-*            token = field-value.
-*        ENDIF.
-*
-*
-**       Update Codes:
-*
-*        DATA i_fields TYPE if_web_http_request=>name_value_pairs.
-*        APPEND VALUE #(
-*            name  = 'x-csrf-token'
-*            value = token " '5iGZK1qT45Vi4UfHYazbPQ=='
-*        )
-*        TO i_fields.
-*        APPEND VALUE #(
-*            name  = 'Content-Type'
-*            value = 'application/json'
-*        )
-*        TO i_fields.
-**        APPEND VALUE #(
-**            name  = 'Content-Length'
-**            value = '1000'
-**        )
-**        TO i_fields.
-*
-*        lo_http_request->set_header_fields(
-*          EXPORTING
-*            i_fields = i_fields
-**          RECEIVING
-**            r_value  =
-*        ).
-*
-*        CONCATENATE
-*                '{'
-*                '"ARTICLE_CODE":"' i_article_code '",'
-*                '"COLOR_CODE":"' i_color_code '",'
-*                '"PRICAT_CODE":"' i_pricat_code '",'
-*                '"SERIES_CODE":"' i_series_code '"'
-*                '}'
-*            INTO
-*                body.
-*
-*        lo_http_request->set_text(
-*          EXPORTING
-*            i_text   = body
-**            i_offset = 0
-**            i_length = -1
-**          RECEIVING
-**            r_value  =
-*        ).
-*
-*        lo_http_response = lo_http_client->execute(
-*            i_method   = if_web_http_client=>put
-*        ).
-*
-*        text                      = lo_http_response->get_text( ).
-*        status                    = lo_http_response->get_status( ).
-*        response_header_fields    = lo_http_response->get_header_fields( ).
-*
-*
-**       Read Descriptions
-*
-*        lo_http_response = lo_http_client->execute(
-*            i_method   = if_web_http_client=>get
-*        ).
-*
-*        text                    = lo_http_response->get_text( ).
-*        status                  = lo_http_response->get_status( ).
-*        response_header_fields  = lo_http_response->get_header_fields( ).
-*
-*        REPLACE '<d:ARTICLE_DESCRIPTION>'   IN text WITH '***ARTICLE_DESCRIPTION***'.
-*        REPLACE '</d:ARTICLE_DESCRIPTION>'  IN text WITH '***ARTICLE_DESCRIPTION***'.
-*        SPLIT text AT '***ARTICLE_DESCRIPTION***' INTO s1 s2 s3.
-*        o_article_description = s2.
-*        o_article_code        = i_article_code.
-*
-*        REPLACE '<d:COLOR_DESCRIPTION>'     IN text WITH '***COLOR_DESCRIPTION***'.
-*        REPLACE '</d:COLOR_DESCRIPTION>'    IN text WITH '***COLOR_DESCRIPTION***'.
-*        SPLIT text AT '***COLOR_DESCRIPTION***' INTO s1 s2 s3.
-*        o_color_description = s2.
-*        o_color_code        = i_color_code.
-*
-*        REPLACE '<d:PRICAT_DESCRIPTION>'     IN text WITH '***PRICAT_DESCRIPTION***'.
-*        REPLACE '</d:PRICAT_DESCRIPTION>'    IN text WITH '***PRICAT_DESCRIPTION***'.
-*        SPLIT text AT '***PRICAT_DESCRIPTION***' INTO s1 s2 s3.
-*        o_pricat_description = s2.
-*        o_pricat_code        = i_pricat_code.
-*
-*        REPLACE '<d:SERIES_DESCRIPTION>'     IN text WITH '***SERIES_DESCRIPTION***'.
-*        REPLACE '</d:SERIES_DESCRIPTION>'    IN text WITH '***SERIES_DESCRIPTION***'.
-*        SPLIT text AT '***SERIES_DESCRIPTION***' INTO s1 s2 s3.
-*        o_series_description = s2.
-*        o_series_code        = i_series_code.
-*
-*    CATCH cx_web_message_error INTO DATA(lx_web_message_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_message_error.
-*
-*    CATCH cx_abap_context_info_error INTO DATA(lx_abap_context_info_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_abap_context_info_error.
-*
-*    CATCH /iwbep/cx_cp_remote INTO DATA(lx_remote).
-*      " Handle remote Exception
-**      RAISE SHORTDUMP lx_remote.
-*
-*    CATCH /iwbep/cx_gateway INTO DATA(lx_gateway).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_gateway.
-*
-*    CATCH cx_web_http_client_error INTO DATA(lx_web_http_client_error).
-*      " Handle Exception
-**      RAISE SHORTDUMP lx_web_http_client_error.
-*
-*    CATCH cx_http_dest_provider_error INTO DATA(lx_http_dest_provider_error).
-*        "handle exception
-**      RAISE SHORTDUMP lx_http_dest_provider_error.
-*
-*    ENDTRY.
-*
-*  ENDMETHOD. " get_custom_fields_internal
 
 ENDCLASS. " lhc_pricat IMPLEMENTATION
 

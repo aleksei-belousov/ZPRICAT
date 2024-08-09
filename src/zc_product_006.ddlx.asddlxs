@@ -38,7 +38,7 @@ annotate entity ZC_PRODUCT_006 with
 
     @UI: {  lineItem:       [ { position: 30, label: 'Pricat Name', cssDefault.width: '100px' } ],
             identification: [ { position: 30, label: 'Pricat Name' } ] }
-    //@UI.hidden: true
+    @UI.hidden: true
     PricatName;
 
     @UI: {  lineItem:       [ { position: 40, label: 'Series Code', cssDefault.width: '100px' } ],
@@ -48,7 +48,7 @@ annotate entity ZC_PRODUCT_006 with
 
     @UI: {  lineItem:       [ { position: 50, label: 'Series Name', cssDefault.width: '100px' } ],
             identification: [ { position: 50, label: 'Series Name' } ] }
-    //@UI.hidden: true
+    @UI.hidden: true
     SeriesName;
 
     @UI: {  lineItem:       [ { position: 60, label: 'Article Code', cssDefault.width: '100px' } ],
@@ -58,7 +58,7 @@ annotate entity ZC_PRODUCT_006 with
 
     @UI: {  lineItem:       [ { position: 70, label: 'Article Name', cssDefault.width: '100px' } ],
             identification: [ { position: 70, label: 'Article Name' } ] }
-    //@UI.hidden: true
+    @UI.hidden: true
     ArticleName; 
 
     @UI: {  lineItem:       [ { position: 80, label: 'Color', cssDefault.width: '100px' } ],
@@ -68,7 +68,7 @@ annotate entity ZC_PRODUCT_006 with
 
     @UI: {  lineItem:       [ { position: 90, label: 'Color Name', cssDefault.width: '100px' } ],
             identification: [ { position: 90, label: 'Color Name' } ] }
-    //@UI.hidden: true
+    @UI.hidden: true
     ColorName;
 
     @UI: {  lineItem:       [ { position: 100, label: 'BackSize', cssDefault.width: '100px' } ],
@@ -133,7 +133,7 @@ annotate entity ZC_PRODUCT_006 with
 
     @UI: {  lineItem:       [ { position: 220, label: 'DTB Group Name', cssDefault.width: '100px' } ],
             identification: [ { position: 220, label: 'DTB Group Name' } ] }
-    //@UI.hidden: true
+    @UI.hidden: true
     DTBGroupName;
 
     @UI.hidden: true

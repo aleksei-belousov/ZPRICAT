@@ -21,7 +21,7 @@ define behavior for ZC_PRICAT_006 alias Pricat
   use action release;
   use action add_pricat_customers;
   use action add_promotion_customers;
-  use action add_all_series;
+  //use action add_all_series;
   use action add_products_based_on_filters;
 
 }

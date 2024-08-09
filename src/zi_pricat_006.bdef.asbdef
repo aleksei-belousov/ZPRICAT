@@ -29,7 +29,7 @@ etag master LocalLastChangedAt
   action release;
   action add_pricat_customers;
   action add_promotion_customers;
-  action add_all_series;
+  //action add_all_series;
   action add_products_based_on_filters;
 
   side effects
@@ -38,7 +38,7 @@ etag master LocalLastChangedAt
     action release affects $self;
     action add_pricat_customers affects entity _Customer;
     action add_promotion_customers affects entity _Customer;
-    action add_all_series affects entity _Product;
+    //action add_all_series affects entity _Product;
     action add_products_based_on_filters affects entity _Product;
    }
 
