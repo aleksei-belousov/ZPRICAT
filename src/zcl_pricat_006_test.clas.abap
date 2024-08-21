@@ -42,6 +42,10 @@ CLASS zcl_pricat_006_test DEFINITION PUBLIC FINAL CREATE PUBLIC.
                   VALUE(o_pricat_code)          TYPE string
                   VALUE(o_series_code)          TYPE string.
 
+*   read via custom business object
+    METHODS get_custom_fields_descriptions IMPORTING VALUE(out) TYPE REF TO if_oo_adt_classrun_out.
+
+
 ENDCLASS.
 
 
@@ -546,32 +550,36 @@ CLASS ZCL_PRICAT_006_TEST IMPLEMENTATION.
 
   METHOD if_oo_adt_classrun~main.
 
+    get_custom_fields_descriptions( out = out ).
+
+    RETURN.
+
     SELECT SINGLE * FROM i_product WHERE ( Product = '0000326-046-B-105' ) INTO @DATA(product).
 
-*    DATA(description) = get_description_via_cbo( i_color = '003' ).
-    get_custom_fields_internal(
-      EXPORTING
-         i_article_code        = '326'
-         i_color_code          = '004'
-         i_pricat_code         = '21'
-         i_series_code         = '003'
-      IMPORTING
-         o_article_description = DATA(article_description)
-         o_color_description   = DATA(color_description)
-         o_pricat_description  = DATA(pricat_description)
-         o_series_description  = DATA(series_description)
-         o_article_code        = DATA(article_code)
-         o_color_code          = DATA(color_code)
-         o_pricat_code         = DATA(pricat_code)
-         o_series_code         = DATA(series_code)
-    ).
+**    DATA(description) = get_description_via_cbo( i_color = '003' ).
+*    get_custom_fields_internal(
+*      EXPORTING
+*         i_article_code        = '326'
+*         i_color_code          = '004'
+*         i_pricat_code         = '21'
+*         i_series_code         = '003'
+*      IMPORTING
+*         o_article_description = DATA(article_description)
+*         o_color_description   = DATA(color_description)
+*         o_pricat_description  = DATA(pricat_description)
+*         o_series_description  = DATA(series_description)
+*         o_article_code        = DATA(article_code)
+*         o_color_code          = DATA(color_code)
+*         o_pricat_code         = DATA(pricat_code)
+*         o_series_code         = DATA(series_code)
+*    ).
+*
+*    out->write( '"' && article_description && '"' ).
+*    out->write( '"' && color_description && '"' ).
+*    out->write( '"' && pricat_description && '"' ).
+*    out->write( '"' && series_description && '"' ).
 
-    out->write( '"' && article_description && '"' ).
-    out->write( '"' && color_description && '"' ).
-    out->write( '"' && pricat_description && '"' ).
-    out->write( '"' && series_description && '"' ).
-
-  ENDMETHOD.
+  ENDMETHOD. " if_oo_adt_classrun~main
 
 
   METHOD read_via_cbo. " get token via custom business object
@@ -826,4 +834,30 @@ CLASS ZCL_PRICAT_006_TEST IMPLEMENTATION.
     ENDTRY.
 
   ENDMETHOD. " update_via_cbo
+
+  METHOD get_custom_fields_descriptions.
+
+    SELECT
+        *
+     FROM
+        I_CustomFieldCodeListText
+     WHERE
+        CustomFieldID = 'YY1_COLOR'
+     ORDER BY
+        Code
+     INTO TABLE
+        @DATA(colors).
+
+    LOOP AT colors INTO DATA(color).
+        CONCATENATE
+                color-Code
+                color-Language
+                color-Description
+            INTO
+                DATA(text) SEPARATED BY space.
+        out->write( text ).
+    ENDLOOP.
+
+  ENDMETHOD. " get_custom_fields_descriptions
+
 ENDCLASS.

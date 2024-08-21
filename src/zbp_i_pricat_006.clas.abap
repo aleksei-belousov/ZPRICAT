@@ -46,6 +46,24 @@ CLASS zbp_i_pricat_006 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_prica
                   VALUE(o_series_code)          TYPE string
                   VALUE(o_dtbgroup_code)        TYPE string.
 
+*   Get Description for Article, Color, Pricat, Series, DTB Group (via CDS)
+    CLASS-METHODS get_custom_fields_cds_internal
+        IMPORTING VALUE(i_article_code)         TYPE string OPTIONAL
+                  VALUE(i_color_code)           TYPE string OPTIONAL
+                  VALUE(i_pricat_code)          TYPE string OPTIONAL
+                  VALUE(i_series_code)          TYPE string OPTIONAL
+                  VALUE(i_dtbgroup_code)        TYPE string OPTIONAL
+        EXPORTING VALUE(o_article_description)  TYPE string
+                  VALUE(o_color_description)    TYPE string
+                  VALUE(o_pricat_description)   TYPE string
+                  VALUE(o_series_description)   TYPE string
+                  VALUE(o_dtbgroup_description) TYPE string
+                  VALUE(o_article_code)         TYPE string
+                  VALUE(o_color_code)           TYPE string
+                  VALUE(o_pricat_code)          TYPE string
+                  VALUE(o_series_code)          TYPE string
+                  VALUE(o_dtbgroup_code)        TYPE string.
+
     CLASS-DATA skip_rows_filling TYPE C. " Skip product rows filling
 
 *   Enrich Product Row With Product Data
@@ -57,7 +75,7 @@ ENDCLASS. " zbp_i_pricat_006 DEFINITION
 
 CLASS zbp_i_pricat_006 IMPLEMENTATION.
 
-  METHOD get_custom_fields_internal. " Get Description for Article, Color, Pricat, Series, DTB Group (via Custom Business Object ODATA API)
+  METHOD get_custom_fields_internal.     " Get Description for Article, Color, Pricat, Series, DTB Group (via Custom Business Object ODATA API)
 
     DATA system_url TYPE string.
 
@@ -414,37 +432,99 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
 
   ENDMETHOD. " get_custom_fields_opt_internal
 
-  METHOD enrich_product_row_internal. " Enrich Product Row With Product Data
+  METHOD get_custom_fields_cds_internal. " Get Description for Article, Color, Pricat, Series, DTB Group (via CDS)
+
+*    DATA(i_article_code)    = CONV string( i_product-YY1_SeriesArticleGroup_PRD ).    " '123'
+*    DATA(i_color_code)      = CONV string( i_product-YY1_Color_PRD ).                 " '030'
+*    DATA(i_pricat_code)     = CONV string( i_product-YY1_PRICATGroup_PRD ).           " '21'
+*    DATA(i_series_code)     = CONV string( i_product-YY1_SeriesName_PRD ).            " '126'
+*    DATA(i_dtbgroup_code)   = CONV string( i_product-YY1_DTBGroup_PRD ).              " '114'
+
+    o_article_description   = ''.
+    o_article_code          = i_article_code.
+    o_color_description     = ''.
+    o_color_code            = i_color_code.
+    o_pricat_description    = ''.
+    o_pricat_code           = i_pricat_code.
+    o_series_description    = ''.
+    o_series_code           = i_series_code.
+    o_dtbgroup_description  = ''.
+    o_dtbgroup_code         = i_dtbgroup_code.
+
+*   Current Language
+    TRY.
+        DATA(language) = cl_abap_context_info=>get_user_language_abap_format( ).
+    CATCH cx_abap_context_info_error.
+        language = 'E'.
+    ENDTRY.
+    IF ( language IS INITIAL ).
+        language = 'E'.
+    ENDIF.
+
+    IF ( i_article_code IS NOT INITIAL ).
+        SELECT SINGLE Description FROM I_CustomFieldCodeListText WHERE ( CustomFieldID = 'YY1_SERIESARTICLEGROUP' ) AND ( Code = @i_article_code ) AND ( Language = @language ) INTO @DATA(article_description).
+        IF ( sy-subrc = 0 ).
+          o_article_description = article_description.
+        ENDIF.
+    ENDIF.
+    IF ( i_color_code IS NOT INITIAL ).
+        SELECT SINGLE Description FROM I_CustomFieldCodeListText WHERE ( CustomFieldID = 'YY1_COLOR'   ) AND ( Code = @i_color_code ) AND ( Language = @language ) INTO @DATA(color_description).
+        IF ( sy-subrc = 0 ).
+          o_color_description = color_description.
+        ENDIF.
+    ENDIF.
+    IF ( i_pricat_code IS NOT INITIAL ).
+        SELECT SINGLE Description FROM I_CustomFieldCodeListText WHERE ( CustomFieldID = 'YY1_PRICATGROUP'  ) AND ( Code = @i_pricat_code ) AND ( Language = @language ) INTO @DATA(pricat_description).
+        IF ( sy-subrc = 0 ).
+          o_pricat_description = pricat_description.
+        ENDIF.
+    ENDIF.
+    IF ( i_series_code IS NOT INITIAL ).
+        SELECT SINGLE Description FROM I_CustomFieldCodeListText WHERE ( CustomFieldID = 'YY1_SERIESNAME'  ) AND ( Code = @i_series_code ) AND ( Language = @language ) INTO @DATA(series_description).
+        IF ( sy-subrc = 0 ).
+          o_series_description = series_description.
+        ENDIF.
+    ENDIF.
+    IF ( i_dtbgroup_code IS NOT INITIAL ).
+        SELECT SINGLE Description FROM I_CustomFieldCodeListText WHERE ( CustomFieldID = 'YY1_DTBGROUP'  ) AND ( Code = @i_dtbgroup_code ) AND ( Language = @language ) INTO @DATA(dtbgroup_description).
+        IF ( sy-subrc = 0 ).
+          o_dtbgroup_description = dtbgroup_description.
+        ENDIF.
+    ENDIF.
+
+  ENDMETHOD. " get_custom_fields_cds_internal
+
+  METHOD enrich_product_row_internal.    " Enrich Product Row With Product Data
 
         IF ( i_product-Product IS INITIAL ).
             RETURN.
         ENDIF.
 
 *        Get Custom Fields (works in On Product Modify Event only)
-*        DATA(i_article_code)    = CONV string( i_product-YY1_SeriesArticleGroup_PRD ).    " '123'
-*        DATA(i_color_code)      = CONV string( i_product-YY1_Color_PRD ).                 " '030'
-*        DATA(i_pricat_code)     = CONV string( i_product-YY1_PRICATGroup_PRD ).           " '21'
-*        DATA(i_series_code)     = CONV string( i_product-YY1_SeriesName_PRD ).            " '126'
-*        DATA(i_dtbgroup_code)   = CONV string( i_product-YY1_DTBGroup_PRD ).              " '114'
-*        zbp_i_pricat_006=>get_custom_fields_opt_internal(
-*          EXPORTING
-*             i_article_code         = i_article_code
-*             i_color_code           = i_color_code
-*             i_pricat_code          = i_pricat_code
-*             i_series_code          = i_series_code
-*             i_dtbgroup_code        = i_dtbgroup_code
-*          IMPORTING
-*             o_article_description  = DATA(article_description)
-*             o_color_description    = DATA(color_description)
-*             o_pricat_description   = DATA(pricat_description)
-*             o_series_description   = DATA(series_description)
-*             o_dtbgroup_description = DATA(dtbgroup_description)
-*             o_article_code         = DATA(article_code)
-*             o_color_code           = DATA(color_code)
-*             o_pricat_code          = DATA(pricat_code)
-*             o_series_code          = DATA(series_code)
-*             o_dtbgroup_code        = DATA(dtbgroup_code)
-*        ).
+        DATA(i_article_code)    = CONV string( i_product-YY1_SeriesArticleGroup_PRD ).    " '123'
+        DATA(i_color_code)      = CONV string( i_product-YY1_Color_PRD ).                 " '030'
+        DATA(i_pricat_code)     = CONV string( i_product-YY1_PRICATGroup_PRD ).           " '21'
+        DATA(i_series_code)     = CONV string( i_product-YY1_SeriesName_PRD ).            " '126'
+        DATA(i_dtbgroup_code)   = CONV string( i_product-YY1_DTBGroup_PRD ).              " '114'
+        zbp_i_pricat_006=>get_custom_fields_cds_internal(
+          EXPORTING
+             i_article_code         = i_article_code
+             i_color_code           = i_color_code
+             i_pricat_code          = i_pricat_code
+             i_series_code          = i_series_code
+             i_dtbgroup_code        = i_dtbgroup_code
+          IMPORTING
+             o_article_description  = DATA(article_description)
+             o_color_description    = DATA(color_description)
+             o_pricat_description   = DATA(pricat_description)
+             o_series_description   = DATA(series_description)
+             o_dtbgroup_description = DATA(dtbgroup_description)
+             o_article_code         = DATA(article_code)
+             o_color_code           = DATA(color_code)
+             o_pricat_code          = DATA(pricat_code)
+             o_series_code          = DATA(series_code)
+             o_dtbgroup_code        = DATA(dtbgroup_code)
+        ).
 
 *       Sales Price - AAA: Sales Price - ???
         DATA(salesPrice)    = 0.
@@ -459,19 +539,19 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
         o_product-Article            = i_product-YY1_SeriesArticleGroup_PRD.
 
 *       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
-*        o_product-ArticleName        = article_description.
+        o_product-ArticleName        = article_description.
 
 *       Pricat Group Number - PRICAT Group Number - ??? YY1_PRICATGroupNo_PRD (fixed to YY1_PRICATGroup_PRD)
         o_product-PricatGroupNumber  = i_product-YY1_PRICATGroup_PRD.
 
 *       Pricat Name - PRICAT Name - YY1_PRICATGroupNo_PRDT (fixed to YY1_PRICATGroup_PRDT)
-*        o_product-PricatName         = pricat_description.
+        o_product-PricatName         = pricat_description.
 
 *       Series - YY1_SeriesName_PRD
         o_product-Series             = i_product-YY1_SeriesName_PRD.
 
 *       Series Name - Series Name - YY1_SeriesName_PRDT
-*        <entity>-SeriesName         = series_description.
+        o_product-SeriesName         = series_description.
 
         SPLIT i_product-Product AT '-' INTO DATA(s1) DATA(s2) DATA(s3) DATA(s4).
 
@@ -485,7 +565,7 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
         o_product-Color              = i_product-YY1_Color_PRD.
 
 *       ColorName - Color name - YY1_Color_PRDT
-*        <entity>-ColorName          = color_description.
+        o_product-ColorName          = color_description.
 
 *       GTIN - GTIN - in A_Product as ProductStandardID
         o_product-GTIN               = i_product-ProductStandardID.
@@ -514,11 +594,11 @@ CLASS zbp_i_pricat_006 IMPLEMENTATION.
         o_product-DTBGroup       = i_product-YY1_DTBGroup_PRD.
 
 *       DTB Group Name
-*        o_product-DTBGroupName   = dtbgroup_description.
+        o_product-DTBGroupName   = dtbgroup_description.
 
 *       ProductURL (link to Product)
         o_product-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && i_product-Product && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
 
   ENDMETHOD. " enrich_product_row_internal
 
-ENDCLASS. " zbp_i_pricat_006 IMPLEMENTATION
+ENDCLASS. " zbp_i_pricat_006 IMPLEMENTATION.

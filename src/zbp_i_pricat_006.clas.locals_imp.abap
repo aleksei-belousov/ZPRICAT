@@ -14,7 +14,9 @@ CLASS lhc_product IMPLEMENTATION.
         RETURN.
     ENDIF.
 
-    DATA it_product_update TYPE TABLE FOR UPDATE zi_pricat_006\\Product. " Product (item)
+    DATA product            TYPE I_Product.
+    DATA o_product          TYPE zi_product_006.
+    DATA it_product_update  TYPE TABLE FOR UPDATE zi_pricat_006\\Product. " Product (item)
 
      " Read transfered instances
     READ ENTITIES OF zi_pricat_006 IN LOCAL MODE
@@ -45,22 +47,20 @@ CLASS lhc_product IMPLEMENTATION.
         DATA(productID) = |{ <entity>-ProductID ALPHA = IN }|.
 
 *       Product
-
-*       Product(s):
-        DATA product TYPE I_Product.
         CLEAR product.
         IF ( <entity>-ProductID IS NOT INITIAL ).
             SELECT SINGLE * FROM I_Product WHERE ( Product = @<entity>-ProductID ) INTO @product. " '0000301-030-C-080'
         ENDIF.
 
+        CLEAR o_product.
         IF ( product-Product IS NOT INITIAL ).
 
-            DATA(i_article_code)    = CONV string( product-YY1_SeriesArticleGroup_PRD ).    " '123'
-            DATA(i_color_code)      = CONV string( product-YY1_Color_PRD ).                 " '030'
-            DATA(i_pricat_code)     = CONV string( product-YY1_PRICATGroup_PRD ).           " '21'
-            DATA(i_series_code)     = CONV string( product-YY1_SeriesName_PRD ).            " '126'
-            DATA(i_dtbgroup_code)   = CONV string( product-YY1_DTBGroup_PRD ).              " '114'
-
+*            DATA(i_article_code)    = CONV string( product-YY1_SeriesArticleGroup_PRD ).    " '123'
+*            DATA(i_color_code)      = CONV string( product-YY1_Color_PRD ).                 " '030'
+*            DATA(i_pricat_code)     = CONV string( product-YY1_PRICATGroup_PRD ).           " '21'
+*            DATA(i_series_code)     = CONV string( product-YY1_SeriesName_PRD ).            " '126'
+*            DATA(i_dtbgroup_code)   = CONV string( product-YY1_DTBGroup_PRD ).              " '114'
+*
 **           get_custom_fields_internal(
 *            zbp_i_pricat_006=>get_custom_fields_opt_internal(
 *              EXPORTING
@@ -82,103 +82,110 @@ CLASS lhc_product IMPLEMENTATION.
 *                 o_dtbgroup_code        = DATA(dtbgroup_code)
 *            ).
 
+            zbp_i_pricat_006=>enrich_product_row_internal(
+              EXPORTING
+                i_product = product
+              IMPORTING
+                o_product = o_product
+            ).
+
         ENDIF.
 
-*       Sales Price - AAA: Sales Price - ???
-        DATA(salesPrice)    = 0.
-
-*       Retail Price - AAE: Retail Price - ??? (maybe A_ProductValuation/to_ValuationCosting as StandardPrice) manage priceS - sales ZRRP + ZRR2 = 9 (1010)
-        DATA(retailPrice)   = 0.
-
-*       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
-        <entity>-Article            = i_article_code.
-
-*       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
+**       Sales Price - AAA: Sales Price - ???
+*        DATA(salesPrice)    = 0.
+*
+**       Retail Price - AAE: Retail Price - ??? (maybe A_ProductValuation/to_ValuationCosting as StandardPrice) manage priceS - sales ZRRP + ZRR2 = 9 (1010)
+*        DATA(retailPrice)   = 0.
+*
+**       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
+*        <entity>-Article            = i_article_code.
+*
+**       Article Name - Article Name - YY1_SeriesArticleGroup_PRDT
 *        <entity>-ArticleName        = article_description.
-
-*       Pricat Group Number - PRICAT Group Number - ??? YY1_PRICATGroupNo_PRD (fixed to YY1_PRICATGroup_PRD)
-        <entity>-PricatGroupNumber  = product-YY1_PRICATGroup_PRD.
-
-*       Pricat Name - PRICAT Name - YY1_PRICATGroupNo_PRDT (fixed to YY1_PRICATGroup_PRDT)
+*
+**       Pricat Group Number - PRICAT Group Number - ??? YY1_PRICATGroupNo_PRD (fixed to YY1_PRICATGroup_PRD)
+*        <entity>-PricatGroupNumber  = product-YY1_PRICATGroup_PRD.
+*
+**       Pricat Name - PRICAT Name - YY1_PRICATGroupNo_PRDT (fixed to YY1_PRICATGroup_PRDT)
 *        <entity>-PricatName         = pricat_description.
-
-*       Series - Series - YY1_SeriesName_PRDT
-        <entity>-Series             = i_series_code.
-
-*       Series Name - Series Name - YY1_SeriesName_PRDT
+*
+**       Series - Series - YY1_SeriesName_PRDT
+*        <entity>-Series             = i_series_code.
+*
+**       Series Name - Series Name - YY1_SeriesName_PRDT
 *        <entity>-SeriesName         = series_description.
-
-        SPLIT product-Product AT '-' INTO DATA(s1) DATA(s2) DATA(s3) DATA(s4).
-
-*       BackSize - Size - ??? in A_Product as YY1_SizeFR_PRD, YY1_SizeUS_PRD, YY1_SizeGB_PRD, Product (substring - 4th)
-        <entity>-BackSize           = s4.
-
-*       CupSize - Cup - ??? in A_Product as Product (substring - 3rd)
-        <entity>-CupSize            = s3.
-
-*       Color - Color - YY1_Color_PRD
-        <entity>-Color              = product-YY1_Color_PRD.
-
-*       ColorName - Color name - YY1_Color_PRDT
-*        <entity>-ColorName          = color_description.
-
-*       GTIN - GTIN - in A_Product as ProductStandardID
-        <entity>-GTIN               = product-ProductStandardID.
-
-*       ProductGroup - MateialGroup (example: Z00001318)
-        <entity>-ProductGroup       = product-ProductGroup.
-
-*       ProductName - Product Desciption ('EN')
-        SELECT SINGLE * FROM I_ProductDescription WHERE ( Product = @<entity>-ProductID ) AND ( Language = 'E' ) INTO @DATA(productDescription).
-        IF ( sy-subrc = 0 ).
-            <entity>-ProductName = productDescription-ProductDescription.
-        ELSE.
-            <entity>-ProductName = ''.
-        ENDIF.
-
-*       SalesStatus (Cross-Distribution Chain Product Status)
-        <entity>-SalesStatus    = product-SalesStatus.
-
-*       ProductType
-        <entity>-ProductType    = product-ProductType.
-
-*       ZCollection
-        <entity>-ZCollection    = product-YY1_Collection_PRD.
-
-*       DTB Group
-        <entity>-DTBGroup       = product-YY1_DTBGroup_PRD.
-
-*       DTB Group Name
+*
+*        SPLIT product-Product AT '-' INTO DATA(s1) DATA(s2) DATA(s3) DATA(s4).
+*
+**       BackSize - Size - ??? in A_Product as YY1_SizeFR_PRD, YY1_SizeUS_PRD, YY1_SizeGB_PRD, Product (substring - 4th)
+*        <entity>-BackSize           = s4.
+*
+**       CupSize - Cup - ??? in A_Product as Product (substring - 3rd)
+*        <entity>-CupSize            = s3.
+*
+**       Color - Color - YY1_Color_PRD
+*        <entity>-Color              = product-YY1_Color_PRD.
+*
+**       ColorName - Color name - YY1_Color_PRDT
+**        <entity>-ColorName          = color_description.
+*
+**       GTIN - GTIN - in A_Product as ProductStandardID
+*        <entity>-GTIN               = product-ProductStandardID.
+*
+**       ProductGroup - MateialGroup (example: Z00001318)
+*        <entity>-ProductGroup       = product-ProductGroup.
+*
+**       ProductName - Product Desciption ('EN')
+*        SELECT SINGLE * FROM I_ProductDescription WHERE ( Product = @<entity>-ProductID ) AND ( Language = 'E' ) INTO @DATA(productDescription).
+*        IF ( sy-subrc = 0 ).
+*            <entity>-ProductName = productDescription-ProductDescription.
+*        ELSE.
+*            <entity>-ProductName = ''.
+*        ENDIF.
+*
+**       SalesStatus (Cross-Distribution Chain Product Status)
+*        <entity>-SalesStatus    = product-SalesStatus.
+*
+**       ProductType
+*        <entity>-ProductType    = product-ProductType.
+*
+**       ZCollection
+*        <entity>-ZCollection    = product-YY1_Collection_PRD.
+*
+**       DTB Group
+*        <entity>-DTBGroup       = product-YY1_DTBGroup_PRD.
+*
+**       DTB Group Name
 *        <entity>-DTBGroupName   = dtbgroup_description.
-
-*       ProductURL (link to Product)
-        IF ( <entity>-ProductID IS NOT INITIAL ).
-            <entity>-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && <entity>-ProductID && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
-        ELSE.
-            <entity>-ProductURL = ''.
-        ENDIF.
+*
+**       ProductURL (link to Product)
+*        IF ( <entity>-ProductID IS NOT INITIAL ).
+*            <entity>-ProductURL = '/ui#Material-manage&/C_Product(Product=''' && <entity>-ProductID && ''',DraftUUID=guid''00000000-0000-0000-0000-000000000000'',IsActiveEntity=true)'.
+*        ELSE.
+*            <entity>-ProductURL = ''.
+*        ENDIF.
 
         APPEND VALUE #(
-            %tky        = <entity>-%tky
-            PricatGroupNumber   = <entity>-PricatGroupNumber
-*            PricatName          = <entity>-PricatName
-            Series              = <entity>-Series
-*            SeriesName          = <entity>-SeriesName
-            Article             = <entity>-Article
-*            ArticleName         = <entity>-ArticleName
-            Color               = <entity>-Color
-*            ColorName           = <entity>-ColorName
-            BackSize            = <entity>-BackSize
-            CupSize             = <entity>-CupSize
-            GTIN                = <entity>-GTIN
-            ProductGroup        = <entity>-ProductGroup
-            ProductName         = <entity>-ProductName
-            SalesStatus         = <entity>-SalesStatus
-            ProductType         = <entity>-ProductType
-            ZCollection         = <entity>-ZCollection
-            DTBGroup            = <entity>-DTBGroup
-*            DTBGroupName        = <entity>-DTBGroupName
-            ProductURL          = <entity>-ProductURL
+            %tky                = <entity>-%tky
+            PricatGroupNumber   = o_product-PricatGroupNumber
+            PricatName          = o_product-PricatName
+            Series              = o_product-Series
+            SeriesName          = o_product-SeriesName
+            Article             = o_product-Article
+            ArticleName         = o_product-ArticleName
+            Color               = o_product-Color
+            ColorName           = o_product-ColorName
+            BackSize            = o_product-BackSize
+            CupSize             = o_product-CupSize
+            GTIN                = o_product-GTIN
+            ProductGroup        = o_product-ProductGroup
+            ProductName         = o_product-ProductName
+            SalesStatus         = o_product-SalesStatus
+            ProductType         = o_product-ProductType
+            ZCollection         = o_product-ZCollection
+            DTBGroup            = o_product-DTBGroup
+            DTBGroupName        = o_product-DTBGroupName
+            ProductURL          = o_product-ProductURL
          )
          TO it_product_update.
 
@@ -186,13 +193,13 @@ CLASS lhc_product IMPLEMENTATION.
             ENTITY Product
             UPDATE FIELDS (
                 PricatGroupNumber
-*                PricatName
+                PricatName
                 Series
-*                SeriesName
+                SeriesName
                 Article
-*                ArticleName
+                ArticleName
                 Color
-*                ColorName
+                ColorName
                 BackSize
                 CupSize
                 GTIN
@@ -202,7 +209,7 @@ CLASS lhc_product IMPLEMENTATION.
                 ProductType
                 ZCollection
                 DTBGroup
-*                DTBGroupName
+                DTBGroupName
                 ProductURL
             )
             WITH it_product_update
@@ -508,17 +515,17 @@ CLASS lhc_pricat IMPLEMENTATION.
                 request_body = request_body && '<Product>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ProductID>' && productID && '</ProductID>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<PricatGroupNumber>' && product-PricatGroupNumber && '</PricatGroupNumber>' && cl_abap_char_utilities=>cr_lf.
-*                request_body = request_body && '<PricatName>' && product-PricatName && '</PricatName>' && cl_abap_char_utilities=>cr_lf.
-*                request_body = request_body && '<SeriesName>' && product-SeriesName && '</SeriesName>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<PricatName>' && product-PricatName && '</PricatName>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<SeriesName>' && product-SeriesName && '</SeriesName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<SeriesCode>' && product-Series && '</SeriesCode>' && cl_abap_char_utilities=>cr_lf.
-*                request_body = request_body && '<ArticleName>' && product-ArticleName && '</ArticleName>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<ArticleName>' && product-ArticleName && '</ArticleName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<Color>' && product-Color && '</Color>' && cl_abap_char_utilities=>cr_lf.
-*                request_body = request_body && '<ColorName>' && product-ColorName && '</ColorName>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<ColorName>' && product-ColorName && '</ColorName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<GTIN>' && product-GTIN && '</GTIN>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<MaterialGroup>' && product-ProductGroup && '</MaterialGroup>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<ProductDescription>' && product-ProductName && '</ProductDescription>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '<DTBGroup>' && product-DTBGroup && '</DTBGroup>' && cl_abap_char_utilities=>cr_lf.
-*                request_body = request_body && '<DTBGroupName>' && product-DTBGroupName && '</DTBGroupName>' && cl_abap_char_utilities=>cr_lf.
+                request_body = request_body && '<DTBGroupName>' && product-DTBGroupName && '</DTBGroupName>' && cl_abap_char_utilities=>cr_lf.
                 request_body = request_body && '</Product>' && cl_abap_char_utilities=>cr_lf.
             ENDLOOP.
 
@@ -926,13 +933,13 @@ CLASS lhc_pricat IMPLEMENTATION.
                     %cid                = cid
                     ProductID           = wa_product-Product
                     PricatGroupNumber   = o_product-PricatGroupNumber
-*                    PricatName          = o_product-PricatName
+                    PricatName          = o_product-PricatName
                     Series              = o_product-Series
-*                    SeriesName          = o_product-SeriesName
+                    SeriesName          = o_product-SeriesName
                     Article             = o_product-Article
-*                    ArticleName         = o_product-ArticleName
+                    ArticleName         = o_product-ArticleName
                     Color               = o_product-Color
-*                    ColorName           = o_product-ColorName
+                    ColorName           = o_product-ColorName
                     BackSize            = o_product-BackSize
                     CupSize             = o_product-CupSize
                     GTIN                = o_product-GTIN
@@ -942,7 +949,7 @@ CLASS lhc_pricat IMPLEMENTATION.
                     ProductType         = o_product-ProductType
                     ZCollection         = o_product-ZCollection
                     DTBGroup            = o_product-DTBGroup
-*                    DTBGroupName        = o_product-DTBGroupName
+                    DTBGroupName        = o_product-DTBGroupName
                     ProductURL          = o_product-ProductURL
                 ) )
             ) TO it_product_create.
@@ -960,16 +967,6 @@ CLASS lhc_pricat IMPLEMENTATION.
 
         ENDLOOP.
 
-**       Create Product (rows)
-*        MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
-*            ENTITY Pricat
-*            CREATE BY \_Product
-*            FIELDS ( ProductID )
-*            WITH it_product_create
-*            MAPPED DATA(mapped2)
-*            FAILED DATA(failed2)
-*            REPORTED DATA(reported2).
-
         zbp_i_pricat_006=>skip_rows_filling = abap_true. " 'X'.
 
         MODIFY ENTITIES OF zi_pricat_006 IN LOCAL MODE
@@ -978,13 +975,13 @@ CLASS lhc_pricat IMPLEMENTATION.
             FIELDS (
                 ProductID
                 PricatGroupNumber
-*                PricatName
+                PricatName
                 Series
-*                SeriesName
+                SeriesName
                 Article
-*                ArticleName
+                ArticleName
                 Color
-*                ColorName
+                ColorName
                 BackSize
                 CupSize
                 GTIN
@@ -994,7 +991,7 @@ CLASS lhc_pricat IMPLEMENTATION.
                 ProductType
                 ZCollection
                 DTBGroup
-*                DTBGroupName
+                DTBGroupName
                 ProductURL
             )
             WITH it_product_create
